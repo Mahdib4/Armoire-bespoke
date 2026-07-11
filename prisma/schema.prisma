@@ -1,0 +1,174 @@
+// Armoire Bespoke — data model.
+//
+// ACTIVE (local dev): SQLite — runs with no cloud credentials so the site can be
+// worked on immediately.
+//
+// TO SWITCH TO NEON (PostgreSQL) once the owner provides credentials:
+//   1. set  provider = "postgresql"  and add  directUrl = env("DIRECT_URL")  below
+//   2. set DATABASE_URL / DIRECT_URL in .env to the Neon pooled / direct strings
+//   3. run: npm run db:push && npm run db:seed   (then optionally npm run media:to-r2)
+// The schema itself is Postgres-portable — no model changes needed.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Key/value store for global site content (logo, slogan, hero video, brand name...).
+model SiteSetting {
+  key   String @id
+  value String
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+}
+
+model Category {
+  id                String             @id @default(cuid())
+  slug              String             @unique
+  name              String
+  order             Int                @default(0)
+  active            Boolean            @default(true)
+  tagline           String?
+  description       String?
+  bannerType        String             @default("image") // image | video
+  bannerUrl         String?
+  posterUrl         String?
+  products          Product[]
+  measurementFields MeasurementField[]
+  createdAt         DateTime           @default(now())
+}
+
+model Product {
+  id             String                 @id @default(cuid())
+  slug           String                 @unique
+  name           String
+  categoryId     String
+  category       Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  type           String                 @default("CUSTOM") // CUSTOM | READYMADE
+  priceTk        Int                    @default(0)
+  description    String?
+  specs          String? // JSON string: [{label,value}]
+  fabric         String?
+  order          Int                    @default(0)
+  active         Boolean                @default(true)
+  featured       Boolean                @default(false)
+  sizeChartUrl   String?
+  images         ProductImage[]
+  customizations ProductCustomization[]
+  orderItems     OrderItem[]
+  createdAt      DateTime               @default(now())
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  order     Int     @default(0)
+}
+
+/// A configurable dimension of a bespoke garment (lapel, collar, cuff, pocket, vent, fabric).
+model CustomizationGroup {
+  id           String                 @id @default(cuid())
+  kind         String                 @unique // lapel | collar | cuff | pocket | vent | fabric
+  name         String
+  referenceUrl String?
+  order        Int                    @default(0)
+  choices      CustomizationChoice[]
+  products     ProductCustomization[]
+}
+
+model CustomizationChoice {
+  id      String             @id @default(cuid())
+  groupId String
+  group   CustomizationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  label   String
+  order   Int                @default(0)
+}
+
+/// Which customization groups apply to a given product (bespoke options shown on its page).
+model ProductCustomization {
+  id        String             @id @default(cuid())
+  productId String
+  groupId   String
+  order     Int                @default(0)
+  product   Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  group     CustomizationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, groupId])
+}
+
+model MeasurementField {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  label      String
+  unit       String   @default("in")
+  hint       String?
+  order      Int      @default(0)
+}
+
+model Quote {
+  id          String  @id @default(cuid())
+  slot        String  @unique // manifesto | after-storytelling | after-blazer ...
+  text        String
+  attribution String?
+  order       Int     @default(0)
+}
+
+model Section {
+  key      String  @id // storytelling | lookbook | fabric | hero | craft
+  title    String?
+  subtitle String?
+  body     String?
+  config   String? // JSON
+  order    Int     @default(0)
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  url       String
+  type      String   @default("image")
+  alt       String?
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  publicId     String      @unique
+  customerName String
+  email        String
+  phone        String
+  address      String?
+  city         String?
+  note         String?
+  subtotalTk   Int         @default(0)
+  status       String      @default("PENDING") // PENDING | CONFIRMED | CANCELLED
+  items        OrderItem[]
+  createdAt    DateTime    @default(now())
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id])
+  productName  String
+  type         String
+  priceTk      Int      @default(0)
+  qty          Int      @default(1)
+  selections   String? // JSON string of chosen customizations
+  measurements String? // JSON string of measurements
+}

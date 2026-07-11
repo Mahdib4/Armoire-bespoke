@@ -1,0 +1,434 @@
+{
+  "categories": [
+    {
+      "slug": "blazer",
+      "name": "Blazer",
+      "src": "BLAZERS",
+      "products": [
+        {
+          "slug": "herringbonebrownstone-classic",
+          "name": "Herringbonebrownstone Classic",
+          "images": [
+            "/media/catalog/blazer/herringbonebrownstone-classic/01.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/02.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/03.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/04.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/05.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/06.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/07.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/08.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/09.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/10.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/11.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/12.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/13.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/14.jpg",
+            "/media/catalog/blazer/herringbonebrownstone-classic/15.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "houndstooth-harmony",
+          "name": "Houndstooth Harmony",
+          "images": [
+            "/media/catalog/blazer/houndstooth-harmony/01.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/02.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/03.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/04.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/05.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/06.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/07.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/08.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/09.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/10.jpg",
+            "/media/catalog/blazer/houndstooth-harmony/11.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "midnight-mobster",
+          "name": "Midnight Mobster",
+          "images": [
+            "/media/catalog/blazer/midnight-mobster/01.jpg",
+            "/media/catalog/blazer/midnight-mobster/02.jpg",
+            "/media/catalog/blazer/midnight-mobster/03.jpg",
+            "/media/catalog/blazer/midnight-mobster/04.jpg",
+            "/media/catalog/blazer/midnight-mobster/05.jpg",
+            "/media/catalog/blazer/midnight-mobster/06.jpg",
+            "/media/catalog/blazer/midnight-mobster/07.jpg",
+            "/media/catalog/blazer/midnight-mobster/08.jpg",
+            "/media/catalog/blazer/midnight-mobster/09.jpg",
+            "/media/catalog/blazer/midnight-mobster/10.jpg",
+            "/media/catalog/blazer/midnight-mobster/11.jpg",
+            "/media/catalog/blazer/midnight-mobster/12.jpg",
+            "/media/catalog/blazer/midnight-mobster/13.jpg",
+            "/media/catalog/blazer/midnight-mobster/14.jpg",
+            "/media/catalog/blazer/midnight-mobster/15.jpg",
+            "/media/catalog/blazer/midnight-mobster/16.jpg",
+            "/media/catalog/blazer/midnight-mobster/17.jpg",
+            "/media/catalog/blazer/midnight-mobster/18.jpg",
+            "/media/catalog/blazer/midnight-mobster/19.jpg",
+            "/media/catalog/blazer/midnight-mobster/20.jpg",
+            "/media/catalog/blazer/midnight-mobster/21.jpg",
+            "/media/catalog/blazer/midnight-mobster/22.jpg",
+            "/media/catalog/blazer/midnight-mobster/23.jpg",
+            "/media/catalog/blazer/midnight-mobster/24.jpg",
+            "/media/catalog/blazer/midnight-mobster/25.jpg",
+            "/media/catalog/blazer/midnight-mobster/26.jpg",
+            "/media/catalog/blazer/midnight-mobster/27.jpg",
+            "/media/catalog/blazer/midnight-mobster/28.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "off-white-signature",
+          "name": "Off-White Signature",
+          "images": [
+            "/media/catalog/blazer/off-white-signature/01.jpg",
+            "/media/catalog/blazer/off-white-signature/02.jpg",
+            "/media/catalog/blazer/off-white-signature/03.jpg",
+            "/media/catalog/blazer/off-white-signature/04.jpg",
+            "/media/catalog/blazer/off-white-signature/05.jpg",
+            "/media/catalog/blazer/off-white-signature/06.jpg",
+            "/media/catalog/blazer/off-white-signature/07.jpg",
+            "/media/catalog/blazer/off-white-signature/08.jpg",
+            "/media/catalog/blazer/off-white-signature/09.jpg",
+            "/media/catalog/blazer/off-white-signature/10.jpg",
+            "/media/catalog/blazer/off-white-signature/11.jpg",
+            "/media/catalog/blazer/off-white-signature/12.jpg"
+          ],
+          "sizeChart": null
+        }
+      ]
+    },
+    {
+      "slug": "jacket",
+      "name": "Jacket",
+      "src": "JACKETS",
+      "products": [
+        {
+          "slug": "coffee-jungle",
+          "name": "Coffee Jungle",
+          "images": [
+            "/media/catalog/jacket/coffee-jungle/01.jpg",
+            "/media/catalog/jacket/coffee-jungle/02.jpg",
+            "/media/catalog/jacket/coffee-jungle/03.jpg",
+            "/media/catalog/jacket/coffee-jungle/04.jpg",
+            "/media/catalog/jacket/coffee-jungle/05.jpg",
+            "/media/catalog/jacket/coffee-jungle/06.jpg",
+            "/media/catalog/jacket/coffee-jungle/07.jpg",
+            "/media/catalog/jacket/coffee-jungle/08.jpg"
+          ],
+          "sizeChart": "/media/catalog/jacket/coffee-jungle/_sizechart.jpg"
+        },
+        {
+          "slug": "denim-jungle",
+          "name": "Denim Jungle",
+          "images": [
+            "/media/catalog/jacket/denim-jungle/01.jpg",
+            "/media/catalog/jacket/denim-jungle/02.jpg",
+            "/media/catalog/jacket/denim-jungle/03.jpg",
+            "/media/catalog/jacket/denim-jungle/04.jpg",
+            "/media/catalog/jacket/denim-jungle/05.jpg",
+            "/media/catalog/jacket/denim-jungle/06.jpg"
+          ],
+          "sizeChart": "/media/catalog/jacket/denim-jungle/_sizechart.jpg"
+        },
+        {
+          "slug": "off-white-jungle",
+          "name": "Off-White Jungle",
+          "images": [
+            "/media/catalog/jacket/off-white-jungle/01.jpg",
+            "/media/catalog/jacket/off-white-jungle/02.jpg",
+            "/media/catalog/jacket/off-white-jungle/03.jpg",
+            "/media/catalog/jacket/off-white-jungle/04.jpg",
+            "/media/catalog/jacket/off-white-jungle/05.jpg",
+            "/media/catalog/jacket/off-white-jungle/06.jpg",
+            "/media/catalog/jacket/off-white-jungle/07.jpg",
+            "/media/catalog/jacket/off-white-jungle/08.jpg"
+          ],
+          "sizeChart": "/media/catalog/jacket/off-white-jungle/_sizechart.jpg"
+        }
+      ]
+    },
+    {
+      "slug": "shirt",
+      "name": "Shirt",
+      "src": "SHIRTS",
+      "products": [
+        {
+          "slug": "baby-pink",
+          "name": "Baby Pink",
+          "images": [
+            "/media/catalog/shirt/baby-pink/01.jpg",
+            "/media/catalog/shirt/baby-pink/02.jpg",
+            "/media/catalog/shirt/baby-pink/03.jpg"
+          ],
+          "sizeChart": "/media/catalog/shirt/baby-pink/_sizechart.jpg"
+        },
+        {
+          "slug": "blue-strip-with-french-cuff",
+          "name": "Blue Strip With French Cuff",
+          "images": [
+            "/media/catalog/shirt/blue-strip-with-french-cuff/01.jpg",
+            "/media/catalog/shirt/blue-strip-with-french-cuff/02.jpg",
+            "/media/catalog/shirt/blue-strip-with-french-cuff/03.jpg",
+            "/media/catalog/shirt/blue-strip-with-french-cuff/04.jpg"
+          ],
+          "sizeChart": "/media/catalog/shirt/blue-strip-with-french-cuff/_sizechart.jpg"
+        },
+        {
+          "slug": "powder-blue",
+          "name": "Powder Blue",
+          "images": [
+            "/media/catalog/shirt/powder-blue/01.jpg",
+            "/media/catalog/shirt/powder-blue/02.jpg",
+            "/media/catalog/shirt/powder-blue/03.jpg",
+            "/media/catalog/shirt/powder-blue/04.jpg"
+          ],
+          "sizeChart": "/media/catalog/shirt/powder-blue/_sizechart.jpg"
+        }
+      ]
+    },
+    {
+      "slug": "trouser",
+      "name": "Trouser",
+      "src": "TROUSERS",
+      "products": [
+        {
+          "slug": "bell-bottom",
+          "name": "Bell-Bottom",
+          "images": [
+            "/media/catalog/trouser/bell-bottom/01.jpg",
+            "/media/catalog/trouser/bell-bottom/02.jpg",
+            "/media/catalog/trouser/bell-bottom/03.jpg",
+            "/media/catalog/trouser/bell-bottom/04.jpg",
+            "/media/catalog/trouser/bell-bottom/05.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "full-cut-pajama",
+          "name": "Full Cut Pajama",
+          "images": [
+            "/media/catalog/trouser/full-cut-pajama/01.jpg",
+            "/media/catalog/trouser/full-cut-pajama/02.jpg",
+            "/media/catalog/trouser/full-cut-pajama/03.jpg",
+            "/media/catalog/trouser/full-cut-pajama/04.jpg",
+            "/media/catalog/trouser/full-cut-pajama/05.jpg",
+            "/media/catalog/trouser/full-cut-pajama/06.jpg",
+            "/media/catalog/trouser/full-cut-pajama/07.jpg",
+            "/media/catalog/trouser/full-cut-pajama/08.jpg",
+            "/media/catalog/trouser/full-cut-pajama/09.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "herringbone",
+          "name": "Herringbone",
+          "images": [
+            "/media/catalog/trouser/herringbone/01.jpg",
+            "/media/catalog/trouser/herringbone/02.jpg",
+            "/media/catalog/trouser/herringbone/03.jpg",
+            "/media/catalog/trouser/herringbone/04.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "houndstooth",
+          "name": "Houndstooth",
+          "images": [
+            "/media/catalog/trouser/houndstooth/01.jpg",
+            "/media/catalog/trouser/houndstooth/02.jpg",
+            "/media/catalog/trouser/houndstooth/03.jpg",
+            "/media/catalog/trouser/houndstooth/04.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "low-waist",
+          "name": "Low Waist",
+          "images": [
+            "/media/catalog/trouser/low-waist/01.jpg",
+            "/media/catalog/trouser/low-waist/02.jpg",
+            "/media/catalog/trouser/low-waist/03.jpg",
+            "/media/catalog/trouser/low-waist/04.jpg",
+            "/media/catalog/trouser/low-waist/05.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "midnight-blue",
+          "name": "Midnight Blue",
+          "images": [
+            "/media/catalog/trouser/midnight-blue/01.jpg",
+            "/media/catalog/trouser/midnight-blue/02.jpg",
+            "/media/catalog/trouser/midnight-blue/03.jpg",
+            "/media/catalog/trouser/midnight-blue/04.jpg",
+            "/media/catalog/trouser/midnight-blue/05.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "off-white",
+          "name": "Off-White",
+          "images": [
+            "/media/catalog/trouser/off-white/01.jpg",
+            "/media/catalog/trouser/off-white/02.jpg",
+            "/media/catalog/trouser/off-white/03.jpg",
+            "/media/catalog/trouser/off-white/04.jpg",
+            "/media/catalog/trouser/off-white/05.jpg"
+          ],
+          "sizeChart": null
+        }
+      ]
+    },
+    {
+      "slug": "kurta",
+      "name": "Kurta",
+      "src": "AB Kurta Collection",
+      "products": [
+        {
+          "slug": "classic-beige-sherwani-cut-kurta",
+          "name": "Classic Beige Sherwani Cut Kurta",
+          "images": [
+            "/media/catalog/kurta/classic-beige-sherwani-cut-kurta/01.jpg",
+            "/media/catalog/kurta/classic-beige-sherwani-cut-kurta/02.jpg",
+            "/media/catalog/kurta/classic-beige-sherwani-cut-kurta/03.jpg",
+            "/media/catalog/kurta/classic-beige-sherwani-cut-kurta/04.jpg",
+            "/media/catalog/kurta/classic-beige-sherwani-cut-kurta/05.jpg",
+            "/media/catalog/kurta/classic-beige-sherwani-cut-kurta/06.jpg"
+          ],
+          "sizeChart": "/media/catalog/kurta/classic-beige-sherwani-cut-kurta/_sizechart.jpg"
+        },
+        {
+          "slug": "lilac-mist-sherwani-cut-kurta",
+          "name": "Lilac Mist Sherwani Cut Kurta",
+          "images": [
+            "/media/catalog/kurta/lilac-mist-sherwani-cut-kurta/01.jpg",
+            "/media/catalog/kurta/lilac-mist-sherwani-cut-kurta/02.jpg",
+            "/media/catalog/kurta/lilac-mist-sherwani-cut-kurta/03.jpg",
+            "/media/catalog/kurta/lilac-mist-sherwani-cut-kurta/04.jpg",
+            "/media/catalog/kurta/lilac-mist-sherwani-cut-kurta/05.jpg",
+            "/media/catalog/kurta/lilac-mist-sherwani-cut-kurta/06.jpg"
+          ],
+          "sizeChart": "/media/catalog/kurta/lilac-mist-sherwani-cut-kurta/_sizechart.jpg"
+        },
+        {
+          "slug": "majestic-grape-egyptian-kurta",
+          "name": "Majestic Grape Egyptian Kurta",
+          "images": [
+            "/media/catalog/kurta/majestic-grape-egyptian-kurta/01.jpg",
+            "/media/catalog/kurta/majestic-grape-egyptian-kurta/02.jpg",
+            "/media/catalog/kurta/majestic-grape-egyptian-kurta/03.jpg",
+            "/media/catalog/kurta/majestic-grape-egyptian-kurta/04.jpg",
+            "/media/catalog/kurta/majestic-grape-egyptian-kurta/05.jpg",
+            "/media/catalog/kurta/majestic-grape-egyptian-kurta/06.jpg"
+          ],
+          "sizeChart": "/media/catalog/kurta/majestic-grape-egyptian-kurta/_sizechart.jpg"
+        },
+        {
+          "slug": "moonlight-white-regal-texture-kurta",
+          "name": "Moonlight White Regal Texture Kurta",
+          "images": [
+            "/media/catalog/kurta/moonlight-white-regal-texture-kurta/01.jpg",
+            "/media/catalog/kurta/moonlight-white-regal-texture-kurta/02.jpg",
+            "/media/catalog/kurta/moonlight-white-regal-texture-kurta/03.jpg",
+            "/media/catalog/kurta/moonlight-white-regal-texture-kurta/04.jpg"
+          ],
+          "sizeChart": "/media/catalog/kurta/moonlight-white-regal-texture-kurta/_sizechart.jpg"
+        },
+        {
+          "slug": "pajama",
+          "name": "Pajama",
+          "images": [
+            "/media/catalog/kurta/pajama/01.jpg",
+            "/media/catalog/kurta/pajama/02.jpg",
+            "/media/catalog/kurta/pajama/03.jpg",
+            "/media/catalog/kurta/pajama/04.jpg",
+            "/media/catalog/kurta/pajama/05.jpg",
+            "/media/catalog/kurta/pajama/06.jpg",
+            "/media/catalog/kurta/pajama/07.jpg",
+            "/media/catalog/kurta/pajama/08.jpg"
+          ],
+          "sizeChart": "/media/catalog/kurta/pajama/_sizechart.jpg"
+        },
+        {
+          "slug": "rongin-mahogani-kurta",
+          "name": "Rongin Mahogani Kurta",
+          "images": [
+            "/media/catalog/kurta/rongin-mahogani-kurta/01.jpg",
+            "/media/catalog/kurta/rongin-mahogani-kurta/02.jpg",
+            "/media/catalog/kurta/rongin-mahogani-kurta/03.jpg",
+            "/media/catalog/kurta/rongin-mahogani-kurta/04.jpg",
+            "/media/catalog/kurta/rongin-mahogani-kurta/05.jpg"
+          ],
+          "sizeChart": null
+        },
+        {
+          "slug": "sahara-olive-egyptian-kurta",
+          "name": "Sahara Olive Egyptian Kurta",
+          "images": [
+            "/media/catalog/kurta/sahara-olive-egyptian-kurta/01.jpg",
+            "/media/catalog/kurta/sahara-olive-egyptian-kurta/02.jpg",
+            "/media/catalog/kurta/sahara-olive-egyptian-kurta/03.jpg",
+            "/media/catalog/kurta/sahara-olive-egyptian-kurta/04.jpg",
+            "/media/catalog/kurta/sahara-olive-egyptian-kurta/05.jpg",
+            "/media/catalog/kurta/sahara-olive-egyptian-kurta/06.jpg"
+          ],
+          "sizeChart": "/media/catalog/kurta/sahara-olive-egyptian-kurta/_sizechart.jpg"
+        },
+        {
+          "slug": "shadow-black-regal-texture-kurta",
+          "name": "Shadow Black Regal Texture Kurta",
+          "images": [
+            "/media/catalog/kurta/shadow-black-regal-texture-kurta/01.jpg",
+            "/media/catalog/kurta/shadow-black-regal-texture-kurta/02.jpg",
+            "/media/catalog/kurta/shadow-black-regal-texture-kurta/03.jpg",
+            "/media/catalog/kurta/shadow-black-regal-texture-kurta/04.jpg"
+          ],
+          "sizeChart": "/media/catalog/kurta/shadow-black-regal-texture-kurta/_sizechart.jpg"
+        },
+        {
+          "slug": "shubho-shada-kurta",
+          "name": "Shubho Shada Kurta",
+          "images": [
+            "/media/catalog/kurta/shubho-shada-kurta/01.jpg",
+            "/media/catalog/kurta/shubho-shada-kurta/02.jpg",
+            "/media/catalog/kurta/shubho-shada-kurta/03.jpg",
+            "/media/catalog/kurta/shubho-shada-kurta/04.jpg"
+          ],
+          "sizeChart": "/media/catalog/kurta/shubho-shada-kurta/_sizechart.jpg"
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2026-07-08T21:03:47.065Z",
+  "styleOptions": [
+    {
+      "kind": "collars",
+      "name": "Collars",
+      "url": "/media/style-options/collars.jpg"
+    },
+    {
+      "kind": "cuffs",
+      "name": "Cuffs",
+      "url": "/media/style-options/cuffs.jpg"
+    },
+    {
+      "kind": "lapels",
+      "name": "Lapels",
+      "url": "/media/style-options/lapels.jpg"
+    },
+    {
+      "kind": "pockets",
+      "name": "Pockets",
+      "url": "/media/style-options/pockets.jpg"
+    },
+    {
+      "kind": "vents",
+      "name": "Vents",
+      "url": "/media/style-options/vents.jpg"
+    }
+  ]
+}
