@@ -1,21 +1,16 @@
 // Armoire Bespoke — data model.
-//
-// ACTIVE (local dev): SQLite — runs with no cloud credentials so the site can be
-// worked on immediately.
-//
-// TO SWITCH TO NEON (PostgreSQL) once the owner provides credentials:
-//   1. set  provider = "postgresql"  and add  directUrl = env("DIRECT_URL")  below
-//   2. set DATABASE_URL / DIRECT_URL in .env to the Neon pooled / direct strings
-//   3. run: npm run db:push && npm run db:seed   (then optionally npm run media:to-r2)
-// The schema itself is Postgres-portable — no model changes needed.
+// Database: Neon (PostgreSQL). DATABASE_URL is the pooled connection string
+// (runtime); DIRECT_URL is the direct/non-pooled string (used by prisma db push
+// / migrations). Both are set in .env (local) and in Vercel's env settings.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 /// Key/value store for global site content (logo, slogan, hero video, brand name...).

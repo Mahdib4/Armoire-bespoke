@@ -37,6 +37,9 @@ yarn-error.log*
 # local dev artifacts
 dev.log
 /public/uploads/
+# SQLite dev db (unused now that the database is Neon/Postgres)
+/prisma/*.db
+/prisma/*.db-journal
 
 # vercel
 .vercel
