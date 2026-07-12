@@ -1,14 +1,30 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-// Floating bar shown on the live site when an admin is logged in, bridging the
-// public view to the matching editor in the dashboard.
+// Floating bar shown on the live site when an admin is logged in. It self-checks
+// the session via /api/admin/session so the public pages don't read cookies
+// server-side (which would make them uncacheable).
 export default function AdminBar() {
   const pathname = usePathname();
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/admin/session", { cache: "no-store" })
+      .then((r) => (r.ok ? setAuthed(true) : null))
+      .catch(() => {})
+      .finally(() => void alive);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (!authed) return null;
+
   let editHref: string | null = null;
   let editLabel = "";
-
   const pm = pathname.match(/^\/p\/([^/]+)/);
   const cm = pathname.match(/^\/c\/([^/]+)/);
   if (pm) {

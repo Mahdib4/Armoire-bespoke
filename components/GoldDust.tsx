@@ -29,8 +29,8 @@ export default function GoldDust({
     const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
     camera.position.z = 22;
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(w, h);
     renderer.setClearColor(0x000000, 0);
     mount.appendChild(renderer.domElement);
@@ -76,10 +76,12 @@ export default function GoldDust({
     scene.add(points);
 
     let raf = 0;
-    let running = true;
+    let visible = !document.hidden;
+    let onScreen = true;
     const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
-    const animate = () => {
-      if (!running) return;
+    const tick = () => {
+      raf = 0;
+      if (!visible || !onScreen) return; // paused when hidden/off-screen
       for (let i = 0; i < count; i++) {
         let y = posAttr.getY(i) + speeds[i];
         if (y > spread / 2) y = -spread / 2;
@@ -88,9 +90,22 @@ export default function GoldDust({
       posAttr.needsUpdate = true;
       points.rotation.y += 0.0004;
       renderer.render(scene, camera);
-      raf = requestAnimationFrame(animate);
+      raf = requestAnimationFrame(tick);
     };
-    animate();
+    const start = () => {
+      if (raf === 0 && visible && onScreen) raf = requestAnimationFrame(tick);
+    };
+    start();
+
+    // Pause the render loop while the layer is off-screen.
+    const io = new IntersectionObserver(
+      ([e]) => {
+        onScreen = e.isIntersecting;
+        if (onScreen) start();
+      },
+      { rootMargin: "80px" }
+    );
+    io.observe(mount);
 
     const onResize = () => {
       w = mount.clientWidth || window.innerWidth;
@@ -101,14 +116,15 @@ export default function GoldDust({
     };
     window.addEventListener("resize", onResize);
     const onVis = () => {
-      running = !document.hidden;
-      if (running) animate();
+      visible = !document.hidden;
+      if (visible) start();
     };
     document.addEventListener("visibilitychange", onVis);
 
     return () => {
-      running = false;
+      onScreen = false;
       cancelAnimationFrame(raf);
+      io.disconnect();
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVis);
       geo.dispose();

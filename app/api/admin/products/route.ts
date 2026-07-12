@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
@@ -44,5 +45,6 @@ export async function POST(req: Request) {
     },
   });
 
+  revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, id: product.id, slug: product.slug });
 }

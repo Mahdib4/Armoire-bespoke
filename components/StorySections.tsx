@@ -86,7 +86,7 @@ export function Fabric({
   } catch {}
   return (
     <section id="fabric" className="sec fabric-sec">
-      <GoldDust className="fabric-dust" density={140} />
+      <GoldDust className="fabric-dust" density={90} />
       <div className="sec-head">
         <div className="sec-title rv">{section?.title || "The Fabric Collection"}</div>
         <div className="sec-sub rv rv-1">{section?.subtitle || "Cloth chosen with intent"}</div>

@@ -8,7 +8,12 @@ import { getProductBySlug, getSettings } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
+
+export async function generateStaticParams() {
+  const products = await prisma.product.findMany({ where: { active: true }, select: { slug: true } });
+  return products.map((p) => ({ product: p.slug }));
+}
 
 export async function generateMetadata({
   params,

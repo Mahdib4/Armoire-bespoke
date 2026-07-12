@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
@@ -52,5 +53,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   });
 
+  revalidatePath("/", "layout");
   return NextResponse.json({ ok: true });
 }

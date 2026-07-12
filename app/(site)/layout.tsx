@@ -5,20 +5,17 @@ import Footer from "@/components/Footer";
 import AdminBar from "@/components/AdminBar";
 import Loader from "@/components/Loader";
 import { getSettings, getNavCategories } from "@/lib/data";
-import { getSessionUser } from "@/lib/auth";
 
-export const dynamic = "force-dynamic";
+// Cache the shell (nav/settings) and regenerate periodically; admin edits also
+// trigger on-demand revalidation. No cookie reads here → pages stay cacheable.
+export const revalidate = 120;
 
 export default async function SiteLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [settings, categories, user] = await Promise.all([
-    getSettings(),
-    getNavCategories(),
-    getSessionUser(),
-  ]);
+  const [settings, categories] = await Promise.all([getSettings(), getNavCategories()]);
 
   const items: NavItem[] = [
     { label: "Storytelling", href: "/#storytelling" },
@@ -39,7 +36,7 @@ export default async function SiteLayout({
         />
         <main>{children}</main>
         <Footer settings={settings} categories={categories} />
-        {user && <AdminBar />}
+        <AdminBar />
       </SmoothScroll>
     </CartProvider>
   );

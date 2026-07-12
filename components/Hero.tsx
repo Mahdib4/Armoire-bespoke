@@ -24,7 +24,7 @@ export default function Hero({
         <source src={video} type="video/mp4" />
       </video>
       <div className="hero-ov" />
-      <GoldDust className="hero-dust" density={200} />
+      <GoldDust className="hero-dust" density={130} />
       <div className="hero-c">
         <p className="hero-line rv">
           {tagline || "Where master craft meets timeless elegance — every stitch, a signature of devotion."}

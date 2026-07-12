@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import LazyVideo from "./LazyVideo";
 import type { HomeCategory } from "@/lib/data";
 
 // Landing page shows the CATEGORY only (immersive banner + CTA).
@@ -16,17 +17,11 @@ export default function CategorySection({
     <section id={category.slug} className="cat-sec">
       <Link href={`/c/${category.slug}`} className="cat-banner" aria-label={`Explore ${category.name}`}>
         {isVideo ? (
-          <video
+          <LazyVideo
             className="cat-banner-media"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
+            src={category.bannerUrl!}
             poster={category.posterUrl || undefined}
-          >
-            <source src={category.bannerUrl!} type="video/mp4" />
-          </video>
+          />
         ) : (
           category.bannerUrl && (
             <Image

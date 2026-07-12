@@ -3,9 +3,16 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductCard from "@/components/ProductCard";
+import LazyVideo from "@/components/LazyVideo";
 import { getCategoryBySlug, getSettings } from "@/lib/data";
+import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
+
+export async function generateStaticParams() {
+  const cats = await prisma.category.findMany({ where: { active: true }, select: { slug: true } });
+  return cats.map((c) => ({ category: c.slug }));
+}
 
 export async function generateMetadata({
   params,
@@ -33,9 +40,7 @@ export default async function CategoryPage({
     <div className="clist">
       <div className="clist-banner">
         {isVideo ? (
-          <video className="cat-banner-media" autoPlay muted loop playsInline poster={cat.posterUrl || undefined}>
-            <source src={cat.bannerUrl!} type="video/mp4" />
-          </video>
+          <LazyVideo className="cat-banner-media" src={cat.bannerUrl!} poster={cat.posterUrl || undefined} />
         ) : (
           cat.bannerUrl && (
             <Image src={cat.bannerUrl} alt={cat.name} fill sizes="100vw" className="cat-banner-media" priority />

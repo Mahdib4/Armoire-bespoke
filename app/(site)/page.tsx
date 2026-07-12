@@ -10,7 +10,7 @@ import {
   getLookbook,
 } from "@/lib/data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export default async function HomePage() {
   const [settings, categories, quotes, sections, looks] = await Promise.all([

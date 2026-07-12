@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
@@ -20,5 +21,6 @@ export async function POST(req: Request) {
   const q = await prisma.quote.create({
     data: { slot: d.slot, text: d.text, attribution: d.attribution ?? null, order: d.order ?? 99 },
   });
+  revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, id: q.id });
 }
