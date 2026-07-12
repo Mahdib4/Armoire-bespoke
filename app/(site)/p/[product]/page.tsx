@@ -9,11 +9,9 @@ import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
 export const revalidate = 120;
-
-export async function generateStaticParams() {
-  const products = await prisma.product.findMany({ where: { active: true }, select: { slug: true } });
-  return products.map((p) => ({ product: p.slug }));
-}
+// Pages are generated on first request and then CDN-cached (ISR). We deliberately
+// do NOT prerender every product at build time to avoid overwhelming Neon's
+// connection pool during the build.
 
 export async function generateMetadata({
   params,

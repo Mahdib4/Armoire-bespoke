@@ -5,14 +5,9 @@ import type { Metadata } from "next";
 import ProductCard from "@/components/ProductCard";
 import LazyVideo from "@/components/LazyVideo";
 import { getCategoryBySlug, getSettings } from "@/lib/data";
-import { prisma } from "@/lib/prisma";
 
 export const revalidate = 120;
-
-export async function generateStaticParams() {
-  const cats = await prisma.category.findMany({ where: { active: true }, select: { slug: true } });
-  return cats.map((c) => ({ category: c.slug }));
-}
+// Generated on first request then CDN-cached (ISR); not prerendered at build.
 
 export async function generateMetadata({
   params,
