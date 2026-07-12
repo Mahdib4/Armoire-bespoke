@@ -4,14 +4,19 @@ import type { Metadata } from "next";
 import ProductGallery from "@/components/ProductGallery";
 import ProductPanel, { type ProductView } from "@/components/ProductPanel";
 import ProductRail from "@/components/ProductRail";
-import { getProductBySlug, getSettings } from "@/lib/data";
+import { getProductBySlug, getSettings, getAllProductSlugs } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
 export const revalidate = 120;
-// Pages are generated on first request and then CDN-cached (ISR). We deliberately
-// do NOT prerender every product at build time to avoid overwhelming Neon's
-// connection pool during the build.
+
+// Prerender every product at build so clicks are instant (static HTML from the
+// CDN). The resilient Prisma pool + cache() dedupe keep the build within Neon's
+// connection limits.
+export async function generateStaticParams() {
+  const products = await getAllProductSlugs();
+  return products.map((p) => ({ product: p.slug }));
+}
 
 export async function generateMetadata({
   params,

@@ -1,22 +1,25 @@
 import "server-only";
+import { cache } from "react";
 import { prisma } from "./prisma";
 
 export type Settings = Record<string, string>;
 
-export async function getSettings(): Promise<Settings> {
+// cache() dedupes identical calls within a single render (e.g. layout + page,
+// or generateMetadata + page), cutting DB round-trips roughly in half.
+export const getSettings = cache(async (): Promise<Settings> => {
   const rows = await prisma.siteSetting.findMany();
   const out: Settings = {};
   for (const r of rows) out[r.key] = r.value;
   return out;
-}
+});
 
-export async function getNavCategories() {
+export const getNavCategories = cache(async () => {
   return prisma.category.findMany({
     where: { active: true },
     orderBy: { order: "asc" },
     select: { slug: true, name: true },
   });
-}
+});
 
 /** Categories with their active products + images, ordered — powers the homepage. */
 export async function getHomeCategories() {
@@ -47,7 +50,7 @@ export async function getSections() {
   return byKey;
 }
 
-export async function getCategoryBySlug(slug: string) {
+export const getCategoryBySlug = cache(async (slug: string) => {
   return prisma.category.findUnique({
     where: { slug },
     include: {
@@ -58,9 +61,9 @@ export async function getCategoryBySlug(slug: string) {
       },
     },
   });
-}
+});
 
-export async function getProductBySlug(slug: string) {
+export const getProductBySlug = cache(async (slug: string) => {
   return prisma.product.findUnique({
     where: { slug },
     include: {
@@ -72,7 +75,7 @@ export async function getProductBySlug(slug: string) {
       },
     },
   });
-}
+});
 
 export async function getAllProductSlugs() {
   return prisma.product.findMany({ where: { active: true }, select: { slug: true } });

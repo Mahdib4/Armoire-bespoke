@@ -4,10 +4,15 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductCard from "@/components/ProductCard";
 import LazyVideo from "@/components/LazyVideo";
-import { getCategoryBySlug, getSettings } from "@/lib/data";
+import { getCategoryBySlug, getSettings, getNavCategories } from "@/lib/data";
 
 export const revalidate = 120;
-// Generated on first request then CDN-cached (ISR); not prerendered at build.
+
+// Prerender each collection at build so clicks are instant (static/CDN).
+export async function generateStaticParams() {
+  const cats = await getNavCategories();
+  return cats.map((c) => ({ category: c.slug }));
+}
 
 export async function generateMetadata({
   params,
