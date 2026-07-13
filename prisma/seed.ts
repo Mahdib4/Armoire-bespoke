@@ -439,7 +439,11 @@ async function main() {
       subtitle: "Cloth chosen with intent",
       body: "From English herringbone to Egyptian cotton, every bolt is selected for hand, drape and how it ages. Choose your cloth, and we build around it.",
       config: JSON.stringify({
-        swatches: GROUPS.find((g) => g.kind === "fabric")?.choices ?? [],
+        // { name, image } — admin can add a photo per fabric in Sections.
+        swatches: (GROUPS.find((g) => g.kind === "fabric")?.choices ?? []).map((name) => ({
+          name,
+          image: "",
+        })),
       }),
     },
   });

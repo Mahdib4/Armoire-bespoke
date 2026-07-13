@@ -166,6 +166,33 @@
 .adm-link:hover { text-decoration: underline; }
 .adm-wa { color: #25d366 !important; font-weight: 500; }
 .adm-hint { color: var(--text-muted); font-size: 0.78rem; margin: -0.2rem 0 0.8rem; line-height: 1.5; }
+
+/* Fabric swatch editor */
+.adm-swatches { display: flex; flex-direction: column; gap: 0.6rem; }
+.adm-swatch {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+.adm-swatch-thumb {
+  width: 64px;
+  height: 48px;
+  flex: none;
+  border: 1px solid var(--border);
+  background: #0b0b0b;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.adm-swatch-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.adm-swatch-thumb span { font-size: 0.6rem; color: var(--text-muted); }
+.adm-swatch-name { flex: 1; min-width: 140px; }
+.adm-swatch-actions { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
 .adm-back { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; }
 .adm-back:hover { color: var(--gold); }
 

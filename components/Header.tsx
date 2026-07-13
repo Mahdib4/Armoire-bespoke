@@ -82,9 +82,8 @@ export default function Header({
 
       <div ref={overlayRef} className={`ab-overlay ${open ? "show" : ""}`}>
         <nav className="ab-nav">
-          {items.map((it, i) => (
+          {items.map((it) => (
             <Link key={it.href} href={it.href} className="mlink" onClick={() => setOpen(false)}>
-              <span className="midx">{String(i + 1).padStart(2, "0")}</span>
               {it.label}
             </Link>
           ))}

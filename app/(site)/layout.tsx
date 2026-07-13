@@ -17,12 +17,9 @@ export default async function SiteLayout({
 }) {
   const [settings, categories] = await Promise.all([getSettings(), getNavCategories()]);
 
-  const items: NavItem[] = [
-    { label: "Storytelling", href: "/#storytelling" },
-    { label: "Lookbook", href: "/#lookbook" },
-    { label: "Fabric Collection", href: "/#fabric" },
-    ...categories.map((c) => ({ label: c.name, href: `/c/${c.slug}` })),
-  ];
+  // Menu shows only the product collections (Blazer, Jacket, Shirt, Trouser, Kurta),
+  // in their configured order — no narrative links.
+  const items: NavItem[] = categories.map((c) => ({ label: c.name, href: `/c/${c.slug}` }));
 
   return (
     <CartProvider>

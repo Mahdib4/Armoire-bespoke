@@ -75,15 +75,21 @@ export function Lookbook({
   );
 }
 
+type Swatch = string | { name: string; image?: string };
+
 export function Fabric({
   section,
 }: {
   section?: Section;
 }) {
-  let swatches: string[] = [];
+  let raw: Swatch[] = [];
   try {
-    swatches = section?.config ? JSON.parse(section.config).swatches ?? [] : [];
+    raw = section?.config ? JSON.parse(section.config).swatches ?? [] : [];
   } catch {}
+  // Accept both legacy string swatches and { name, image } objects.
+  const swatches = raw.map((s) =>
+    typeof s === "string" ? { name: s, image: "" } : { name: s.name, image: s.image || "" }
+  );
   return (
     <section id="fabric" className="sec fabric-sec">
       <GoldDust className="fabric-dust" density={90} />
@@ -95,8 +101,17 @@ export function Fabric({
       <p className="fabric-body rv rv-2">{section?.body}</p>
       <div className="fabric-swatches">
         {swatches.map((s, i) => (
-          <div key={s} className={`swatch rv sw-${i % 6}`}>
-            <span>{s}</span>
+          <div key={s.name + i} className={`swatch rv sw-${i % 6} ${s.image ? "has-img" : ""}`}>
+            {s.image && (
+              <Image
+                src={s.image}
+                alt={s.name}
+                fill
+                sizes="(max-width:640px) 45vw, 200px"
+                className="swatch-img"
+              />
+            )}
+            <span>{s.name}</span>
           </div>
         ))}
       </div>

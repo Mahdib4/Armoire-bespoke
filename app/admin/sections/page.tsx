@@ -27,6 +27,7 @@ export default async function AdminSections() {
               title: s?.title || "",
               subtitle: s?.subtitle || "",
               body: s?.body || "",
+              config: s?.config || "",
             }}
           />
         );

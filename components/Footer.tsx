@@ -62,6 +62,12 @@ export default function Footer({
       </div>
       <div className="ab-foot-base">
         <span>© {new Date().getFullYear()} {settings.brandName || "Armoire Bespoke"}</span>
+        <span className="ab-foot-credit">
+          Crafted by{" "}
+          <a href="https://zeriotic.com/" target="_blank" rel="noopener noreferrer">
+            Zeriotic
+          </a>
+        </span>
         <span>{tagline}</span>
       </div>
     </footer>
