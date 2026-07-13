@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SocialIcons from "./SocialIcons";
+import { waLink } from "@/lib/whatsapp";
 import type { Settings } from "@/lib/data";
 
 export default function Footer({
@@ -44,6 +45,16 @@ export default function Footer({
           <span>{settings.address}</span>
           {settings.contactPhone && <a href={`tel:${settings.contactPhone}`}>{settings.contactPhone}</a>}
           {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
+          {settings.whatsapp && (
+            <a
+              href={waLink(settings.whatsapp, "Hello Armoire Bespoke, I'd like to enquire about your tailoring.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ab-foot-wa"
+            >
+              ✆ WhatsApp us
+            </a>
+          )}
           <Link href="/#appointment" className="btn btn-ghost ab-foot-cta">
             Book Consultation
           </Link>

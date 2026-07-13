@@ -83,7 +83,7 @@ const CAT: Record<
       { label: "Jacket Length" },
       { label: "Waist" },
     ],
-    customization: ["fabric", "lapel", "pocket", "vent", "cuff"],
+    customization: ["lapel", "cuff", "pocket", "vent", "fabric"],
     specs: [
       { label: "Construction", value: "Half-canvassed, structured shoulder" },
       { label: "Closure", value: "Single-breasted, two-button" },
@@ -108,7 +108,7 @@ const CAT: Record<
       { label: "Sleeve Length" },
       { label: "Jacket Length" },
     ],
-    customization: ["fabric", "pocket"],
+    customization: ["fabric", "jacket-style"],
     specs: [
       { label: "Style", value: "Four-pocket safari / jungle jacket" },
       { label: "Fit", value: "Relaxed, unstructured" },
@@ -134,7 +134,7 @@ const CAT: Record<
       { label: "Shirt Length" },
       { label: "Waist" },
     ],
-    customization: ["fabric", "collar", "cuff"],
+    customization: ["collar", "cuff", "pocket", "fabric"],
     specs: [
       { label: "Collar", value: "Fused, choice of profile" },
       { label: "Placket", value: "Standard front" },
@@ -159,7 +159,7 @@ const CAT: Record<
       { label: "Thigh" },
       { label: "Bottom (Hem)" },
     ],
-    customization: ["fabric", "pocket"],
+    customization: ["pleat", "waistband", "fit", "fabric"],
     specs: [
       { label: "Rise", value: "Mid, adjustable" },
       { label: "Waistband", value: "Extended tab / side adjusters" },
@@ -182,7 +182,7 @@ const CAT: Record<
       { label: "Sleeve Length" },
       { label: "Kurta Length" },
     ],
-    customization: ["fabric", "collar"],
+    customization: ["kurta-style", "fabric"],
     specs: [
       { label: "Silhouette", value: "Sherwani / Egyptian / regal cut" },
       { label: "Placket", value: "Concealed or feature button" },
@@ -223,6 +223,13 @@ const GROUPS: {
   { kind: "cuff", name: "Cuff", refKind: "cuffs", choices: ["Barrel", "French (Double)", "Mitred"] },
   { kind: "pocket", name: "Pocket", refKind: "pockets", choices: ["Flap", "Jetted", "Patch"] },
   { kind: "vent", name: "Vent", refKind: "vents", choices: ["Single", "Double (Side)", "None"] },
+  // Trouser-specific
+  { kind: "pleat", name: "Pleat", choices: ["Flat Front", "Single Pleat", "Double Pleat"] },
+  { kind: "waistband", name: "Waistband", choices: ["Standard", "Extended Tab", "Side Adjusters"] },
+  { kind: "fit", name: "Fit", choices: ["Slim", "Tailored", "Classic"] },
+  // Jacket / Kurta silhouette
+  { kind: "jacket-style", name: "Style", choices: ["Safari / Jungle", "Field Jacket", "Bomber Cut"] },
+  { kind: "kurta-style", name: "Style", choices: ["Sherwani-Cut", "Egyptian", "Classic Straight"] },
 ];
 
 const QUOTES: { slot: string; text: string; attribution?: string; order: number }[] = [
@@ -262,17 +269,20 @@ async function main() {
   const settings: Record<string, string> = {
     brandName: "Armoire Bespoke",
     brandShort: "Armoire",
-    slogan: "Tailored to define you",
+    slogan: "Tailored to Define You",
     logoDark: "/media/brand/logo-dark.png",
     logoLight: "/media/brand/logo-light.png",
+    logoMono: "/media/brand/logo-mono.png",
     heroVideo: "/media/videos/hero.mp4",
     heroPoster: "",
     midVideo: "/media/videos/mid.mp4",
     currency: "Tk",
     contactEmail: process.env.OWNER_EMAIL || "hello@armoirebespoke.com",
     contactPhone: "+880 1XXX-XXXXXX",
+    whatsapp: "+8801XXXXXXXXX",
     address: "Dhanmondi, Dhaka, Bangladesh",
-    instagram: "https://instagram.com/",
+    facebook: "https://www.facebook.com/profile.php?id=61583944840199",
+    instagram: "https://www.instagram.com/armoirebespoke",
     footerNote: "Where master craft meets timeless elegance. Every stitch — a signature of devotion.",
   };
   for (const [key, value] of Object.entries(settings)) {
@@ -336,15 +346,31 @@ async function main() {
       },
     });
 
-    for (let pi = 0; pi < mcat.products.length; pi++) {
+    // Ready-Made sizes/colours per category (editable later in admin).
+    const rmSizes = mcat.slug === "trouser" ? ["30", "32", "34", "36"] : ["S", "M", "L", "XL"];
+    const rmStock = [6, 8, 5, 3];
+    const rmColors: Record<string, string[]> = {
+      blazer: ["Charcoal", "Navy", "Black"],
+      jacket: ["Olive", "Sand", "Black"],
+      shirt: ["White", "Sky Blue", "Pink"],
+      trouser: ["Charcoal", "Beige", "Navy"],
+      kurta: ["Ivory", "Beige", "Grape"],
+    };
+    // Mark the last 1–2 pieces of each collection as Ready-Made (immediate purchase);
+    // the rest stay Tailor-Made. Guarantees every collection shows both sections.
+    const len = mcat.products.length;
+    const rmCount = Math.min(2, Math.max(0, len - 1));
+
+    for (let pi = 0; pi < len; pi++) {
       const mp = mcat.products[pi];
       const displayName = NAME[mp.slug] ?? mp.name;
+      const isReadyMade = pi >= len - rmCount;
       const product = await prisma.product.create({
         data: {
           slug: mp.slug,
           name: displayName,
           categoryId: category.id,
-          type: "CUSTOM",
+          type: isReadyMade ? "READYMADE" : "CUSTOM",
           priceTk: cfg.price,
           description: `${displayName} — ${cfg.blurb}`,
           specs: JSON.stringify(cfg.specs),
@@ -359,12 +385,21 @@ async function main() {
               order: i,
             })),
           },
-          customizations: {
-            create: cfg.customization.map((kind, i) => ({
-              groupId: groupIdByKind[kind],
-              order: i,
-            })),
-          },
+          // Ready-Made → inventory (sizes + stock + colours), no bespoke options.
+          // Tailor-Made → bespoke customization groups, no inventory.
+          ...(isReadyMade
+            ? {
+                colors: JSON.stringify(rmColors[mcat.slug] ?? ["Charcoal", "Navy", "Black"]),
+                sizeOptions: JSON.stringify(rmSizes.map((label, i) => ({ label, stock: rmStock[i] ?? 4 }))),
+              }
+            : {
+                customizations: {
+                  create: cfg.customization.map((kind, i) => ({
+                    groupId: groupIdByKind[kind],
+                    order: i,
+                  })),
+                },
+              }),
         },
       });
       void product;
@@ -412,12 +447,12 @@ async function main() {
   // ----- Admin user -----
   const email = process.env.ADMIN_EMAIL || "admin@armoirebespoke.com";
   const password = process.env.ADMIN_PASSWORD || "armoire2026";
-  await prisma.adminUser.create({
-    data: {
-      email,
-      name: "Atelier Admin",
-      passwordHash: await bcrypt.hash(password, 10),
-    },
+  const passwordHash = await bcrypt.hash(password, 10);
+  // Upsert so re-seeding is idempotent (email is unique).
+  await prisma.adminUser.upsert({
+    where: { email },
+    update: { passwordHash, name: "Atelier Admin" },
+    create: { email, name: "Atelier Admin", passwordHash },
   });
 
   const counts = {

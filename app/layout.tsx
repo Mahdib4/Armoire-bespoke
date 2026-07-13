@@ -22,11 +22,53 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const DESCRIPTION =
+  "Armoire Bespoke — made-to-measure blazers, jackets, shirts, trousers and ceremonial kurtas, plus ready-made pieces. Where master craft meets timeless elegance.";
+
 export const metadata: Metadata = {
-  title: "Armoire Bespoke — Tailored to Define You",
-  description:
-    "Armoire Bespoke — made-to-measure blazers, jackets, shirts, trousers and ceremonial kurtas. Where master craft meets timeless elegance.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  title: {
+    default: "Armoire Bespoke — Tailored to Define You",
+    template: "%s · Armoire Bespoke",
+  },
+  description: DESCRIPTION,
+  applicationName: "Armoire Bespoke",
+  metadataBase: new URL(SITE_URL),
+  keywords: [
+    "Armoire Bespoke",
+    "bespoke tailoring",
+    "made to measure",
+    "custom blazer",
+    "tailored suit",
+    "Dhaka tailor",
+    "kurta",
+  ],
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png", sizes: "48x48" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: "/apple-icon.png",
+    shortcut: "/favicon.ico",
+  },
+  manifest: "/site.webmanifest",
+  openGraph: {
+    type: "website",
+    siteName: "Armoire Bespoke",
+    title: "Armoire Bespoke — Tailored to Define You",
+    description: DESCRIPTION,
+    url: SITE_URL,
+    images: [
+      { url: "/og-image.png", width: 1200, height: 630, alt: "Armoire Bespoke — Tailored to Define You" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Armoire Bespoke — Tailored to Define You",
+    description: DESCRIPTION,
+    images: ["/og-image.png"],
+  },
 };
 
 export const viewport: Viewport = {

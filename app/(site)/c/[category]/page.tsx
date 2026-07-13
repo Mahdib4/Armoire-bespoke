@@ -21,8 +21,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { category: slug } = await params;
   const cat = await getCategoryBySlug(slug);
-  if (!cat) return { title: "Not found — Armoire Bespoke" };
-  return { title: `${cat.name} — Armoire Bespoke`, description: cat.description || undefined };
+  if (!cat) return { title: "Not found" };
+  return { title: cat.name, description: cat.description || undefined };
 }
 
 export default async function CategoryPage({
@@ -35,6 +35,27 @@ export default async function CategoryPage({
   if (!cat || !cat.active) notFound();
   const currency = settings.currency || "Tk";
   const isVideo = cat.bannerType === "video" && cat.bannerUrl;
+
+  const readyMade = cat.products.filter((p) => p.type === "READYMADE");
+  const tailorMade = cat.products.filter((p) => p.type !== "READYMADE");
+
+  const renderGrid = (list: typeof cat.products) => (
+    <div className="clist-grid">
+      {list.map((p) => (
+        <ProductCard
+          key={p.slug}
+          currency={currency}
+          product={{
+            slug: p.slug,
+            name: p.name,
+            priceTk: p.priceTk,
+            type: p.type,
+            images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
+          }}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <div className="clist">
@@ -59,21 +80,39 @@ export default async function CategoryPage({
         <span className="clist-count">{cat.products.length} pieces</span>
       </div>
 
-      <div className="clist-grid">
-        {cat.products.map((p) => (
-          <ProductCard
-            key={p.slug}
-            currency={currency}
-            product={{
-              slug: p.slug,
-              name: p.name,
-              priceTk: p.priceTk,
-              type: p.type,
-              images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
-            }}
-          />
-        ))}
-      </div>
+      {/* Ready Made — finished, in-stock pieces for immediate purchase */}
+      {readyMade.length > 0 && (
+        <section className="cgroup" id="ready-made">
+          <div className="cgroup-head">
+            <span className="eyebrow">In Stock · Immediate Purchase</span>
+            <h2 className="cgroup-title">Ready Made</h2>
+            <p className="cgroup-sub">
+              Finished pieces, already crafted and ready to wear. Choose your size and colour — available for
+              immediate purchase.
+            </p>
+          </div>
+          {renderGrid(readyMade)}
+        </section>
+      )}
+
+      {/* Tailor Made — individually crafted to the client's measurements */}
+      {tailorMade.length > 0 && (
+        <section className="cgroup" id="tailor-made">
+          <div className="cgroup-head">
+            <span className="eyebrow">Made to Measure</span>
+            <h2 className="cgroup-title">Tailor Made</h2>
+            <p className="cgroup-sub">
+              Individually crafted to your measurements and design preferences — fabric, cut and detailing
+              chosen by you, finished at your fitting.
+            </p>
+          </div>
+          {renderGrid(tailorMade)}
+        </section>
+      )}
+
+      {cat.products.length === 0 && (
+        <p className="clist-empty">This collection is being tailored. Please check back soon.</p>
+      )}
 
       <div className="clist-back">
         <Link href="/#lookbook" className="btn btn-ghost">

@@ -396,7 +396,7 @@ html.lenis body {
   font-size: 0.72rem;
   letter-spacing: 0.44em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: #ffffff;
   padding-left: 4px;
 }
 .ab-header.scrolled .ab-slogan {
@@ -530,7 +530,7 @@ html.lenis body {
   font-size: 0.62rem;
   letter-spacing: 0.34em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: #ffffff;
   margin-top: 0.7rem;
 }
 .ab-foot-social { margin-top: 1.3rem; }
@@ -589,6 +589,8 @@ html.lenis body {
 .ab-foot-col a:hover {
   color: var(--ivory);
 }
+.ab-foot-wa { color: #4bd07f !important; letter-spacing: 0.02em; }
+.ab-foot-wa:hover { color: #6fe39a !important; }
 .ab-foot-cta {
   margin-top: 0.8rem;
   align-self: flex-start;
@@ -1256,6 +1258,31 @@ html.lenis body {
   transition: border-color 0.3s;
 }
 .meas-field input:focus { outline: none; border-color: var(--gold); }
+.ppanel-optmeas {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0;
+  margin-bottom: 0.6rem;
+}
+.ppanel-optmeas em { font-style: normal; color: var(--text-muted); text-transform: none; letter-spacing: 0.03em; }
+.ppanel-optmeas-sign {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  font-size: 0.9rem;
+  line-height: 1;
+}
 .ppanel-buy {
   display: flex;
   gap: 1rem;
@@ -1381,6 +1408,51 @@ html.lenis body {
 }
 .clist-grid .pcard { width: clamp(240px, 30vw, 300px); }
 .clist-back { text-align: center; margin-top: 3.5rem; }
+
+/* Ready-Made / Tailor-Made section split on category pages */
+.cgroup {
+  margin-top: clamp(2.6rem, 5vw, 4rem);
+  scroll-margin-top: 90px;
+}
+.cgroup:first-of-type { margin-top: clamp(1.6rem, 3vw, 2.4rem); }
+.cgroup-head {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+}
+.cgroup-head::before {
+  content: "";
+  width: 44px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin-bottom: 0.4rem;
+}
+.cgroup-title {
+  font-family: var(--font-cinzel), serif;
+  font-size: clamp(1.5rem, 3.4vw, 2.2rem);
+  letter-spacing: 0.06em;
+  color: var(--ivory);
+}
+.cgroup-sub {
+  color: var(--text-muted);
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.6;
+  max-width: 52ch;
+}
+.clist-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  padding: 3rem 1rem;
+}
 
 @media (max-width: 900px) {
   .pdp-grid { grid-template-columns: 1fr; }

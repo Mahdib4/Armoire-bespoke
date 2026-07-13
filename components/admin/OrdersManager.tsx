@@ -2,6 +2,7 @@
 import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatTk } from "@/lib/format";
+import { waLink } from "@/lib/whatsapp";
 
 type Item = {
   productName: string;
@@ -77,6 +78,18 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
                 <tr>
                   <td colSpan={7} style={{ background: "#0d0d0d" }}>
                     <div style={{ padding: "0.6rem 0" }}>
+                      <div style={{ marginBottom: "0.6rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                        <a
+                          href={waLink(o.phone, `Hello ${o.customerName}, regarding your Armoire Bespoke order ${o.publicId}…`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="adm-link adm-wa"
+                        >
+                          ✆ Message on WhatsApp
+                        </a>
+                        <a href={`tel:${o.phone}`} className="adm-link">Call {o.phone}</a>
+                        <a href={`mailto:${o.email}`} className="adm-link">Email</a>
+                      </div>
                       {o.address && <p style={{ color: "var(--text-muted)", fontSize: "0.78rem", marginBottom: "0.6rem" }}>{o.address}{o.city ? `, ${o.city}` : ""}</p>}
                       {o.note && <p style={{ color: "var(--gold-dim)", fontSize: "0.78rem", marginBottom: "0.6rem" }}>Note: {o.note}</p>}
                       {o.items.map((it, i) => (

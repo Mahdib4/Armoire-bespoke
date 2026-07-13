@@ -17,11 +17,14 @@ export default async function AdminLayout({
     return <div className="adm-bare">{children}</div>;
   }
 
-  const unread = await prisma.enquiry.count({ where: { read: false } }).catch(() => 0);
+  const [unread, pendingOrders] = await Promise.all([
+    prisma.enquiry.count({ where: { read: false } }).catch(() => 0),
+    prisma.order.count({ where: { status: "PENDING" } }).catch(() => 0),
+  ]);
 
   return (
     <div className="adm-root">
-      <AdminSidebar email={user.email} unread={unread} />
+      <AdminSidebar email={user.email} unread={unread} pendingOrders={pendingOrders} />
       <div className="adm-main">{children}</div>
     </div>
   );

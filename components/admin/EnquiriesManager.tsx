@@ -1,6 +1,7 @@
 "use client";
 import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
+import { waLink } from "@/lib/whatsapp";
 
 type Enquiry = {
   id: string;
@@ -70,12 +71,18 @@ export default function EnquiriesManager({ enquiries }: { enquiries: Enquiry[] }
                     <div style={{ padding: "0.7rem 0", color: "var(--cream)", fontSize: "0.85rem", lineHeight: 1.7 }}>
                       {e.subject && <div style={{ color: "var(--gold)" }}>{e.subject}</div>}
                       {e.message || <em style={{ color: "var(--text-muted)" }}>No message provided.</em>}
-                      {e.email && (
-                        <div style={{ marginTop: "0.6rem" }}>
-                          <a href={`mailto:${e.email}`} className="adm-link">Reply by email</a> ·{" "}
-                          <a href={`tel:${e.phone}`} className="adm-link">Call {e.phone}</a>
-                        </div>
-                      )}
+                      <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                        <a
+                          href={waLink(e.phone, `Hello ${e.name}, thank you for contacting Armoire Bespoke.`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="adm-link adm-wa"
+                        >
+                          ✆ Reply on WhatsApp
+                        </a>
+                        <a href={`tel:${e.phone}`} className="adm-link">Call {e.phone}</a>
+                        {e.email && <a href={`mailto:${e.email}`} className="adm-link">Reply by email</a>}
+                      </div>
                     </div>
                   </td>
                 </tr>

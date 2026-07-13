@@ -25,9 +25,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { product: slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Not found — Armoire Bespoke" };
+  if (!product) return { title: "Not found" };
   return {
-    title: `${product.name} — Armoire Bespoke`,
+    title: product.name,
     description: product.description || undefined,
   };
 }
@@ -64,11 +64,11 @@ export default async function ProductPage({
     tailoringNote:
       settings.tailoringNote ||
       "Final price may vary depending on the selected fabric and customization options.",
-    // Strict separation: Tailor-Made never carries colour/size; Ready-Made never
-    // carries bespoke options or measurements (not even in the payload).
-    measurements: isReady
-      ? []
-      : product.category.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),
+    // Separation: Tailor-Made never carries colour/size; Ready-Made never carries
+    // bespoke options. Measurements are passed for both — Tailor-Made shows them
+    // inline; Ready-Made keeps them behind an optional, collapsed toggle (for minor
+    // alterations, e.g. a ready-made kurta).
+    measurements: product.category.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),
     customizations: isReady
       ? []
       : product.customizations.map((pc) => ({

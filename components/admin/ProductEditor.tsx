@@ -158,9 +158,10 @@ export default function ProductEditor({
         </div>
       </div>
 
-      {/* Ready-Made inventory */}
+      {/* Ready-Made inventory — only for Ready Made products */}
+      {!isTailor && (
       <div className="adm-panel">
-        <h3>Ready-Made Inventory {isTailor && "(shown when type is Ready Made)"}</h3>
+        <h3>Ready-Made Inventory</h3>
         <div className="adm-form-grid">
           <div className="adm-field wide">
             <label>Colours</label>
@@ -188,6 +189,7 @@ export default function ProductEditor({
           </div>
         </div>
       </div>
+      )}
 
       {/* Images */}
       <div className="adm-panel">
@@ -227,9 +229,11 @@ export default function ProductEditor({
         )}
       </div>
 
-      {/* Bespoke Options (Tailor Made) */}
+      {/* Bespoke Options — only for Tailor Made products */}
+      {isTailor && (
       <div className="adm-panel">
-        <h3>Bespoke Options {!isTailor && "(shown when type is Tailor Made)"}</h3>
+        <h3>Bespoke Options</h3>
+        <p className="adm-hint">Only the options you enable here appear on this product's Tailor-Made configurator.</p>
         <div className="chip-row">
           {groups.map((g) => {
             const on = f.customizationKinds.includes(g.kind);
@@ -248,6 +252,7 @@ export default function ProductEditor({
           })}
         </div>
       </div>
+      )}
 
       {/* Specs */}
       <div className="adm-panel">

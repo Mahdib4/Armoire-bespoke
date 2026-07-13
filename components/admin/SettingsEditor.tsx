@@ -15,7 +15,9 @@ const FIELDS: { key: string; label: string; upload?: "image" | "video"; textarea
   { key: "currency", label: "Currency Symbol" },
   { key: "contactEmail", label: "Contact Email" },
   { key: "contactPhone", label: "Contact Phone" },
+  { key: "whatsapp", label: "WhatsApp Number (with country code)" },
   { key: "address", label: "Address" },
+  { key: "facebook", label: "Facebook URL" },
   { key: "instagram", label: "Instagram URL" },
   { key: "footerNote", label: "Footer Note", textarea: true },
 ];

@@ -1,0 +1,13 @@
+{
+  "name": "Armoire Bespoke",
+  "short_name": "Armoire",
+  "description": "Tailored to Define You — bespoke and ready-made tailoring.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "/icon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/apple-icon.png", "type": "image/png", "sizes": "180x180" }
+  ]
+}

@@ -44,6 +44,26 @@
 .adm-side-foot { display: flex; flex-direction: column; gap: 0.7rem; padding-top: 1.4rem; border-top: 1px solid rgba(255,255,255,0.06); }
 .adm-viewsite { color: var(--text-muted); font-size: 0.74rem; text-decoration: none; }
 .adm-viewsite:hover { color: var(--gold); }
+.adm-push {
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  color: var(--gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  padding: 0.5rem 0.7rem;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.25s;
+}
+.adm-push:hover { background: rgba(201, 168, 76, 0.18); }
+.adm-push:disabled { opacity: 0.6; cursor: default; }
+.adm-push.on {
+  background: rgba(75, 208, 127, 0.12);
+  border-color: rgba(75, 208, 127, 0.4);
+  color: #4bd07f;
+  cursor: default;
+}
 .adm-user { font-size: 0.68rem; color: var(--gold-dim); word-break: break-all; }
 .adm-logout {
   background: none; border: 1px solid var(--border); color: var(--ivory);
@@ -144,6 +164,8 @@
 .adm-empty { color: var(--text-muted); padding: 2rem 0; font-style: italic; font-family: var(--font-cormorant), serif; }
 .adm-link { color: var(--gold); text-decoration: none; }
 .adm-link:hover { text-decoration: underline; }
+.adm-wa { color: #25d366 !important; font-weight: 500; }
+.adm-hint { color: var(--text-muted); font-size: 0.78rem; margin: -0.2rem 0 0.8rem; line-height: 1.5; }
 .adm-back { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; }
 .adm-back:hover { color: var(--gold); }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendEnquiryEmail } from "@/lib/email";
+import { sendAdminPush } from "@/lib/push";
 
 export const runtime = "nodejs";
 
@@ -45,6 +46,18 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     console.error("[enquiries] email failed:", e);
+  }
+
+  // Web Push to admin browsers (best-effort).
+  try {
+    await sendAdminPush({
+      title: d.type === "appointment" ? "New appointment request" : "New enquiry",
+      body: `${d.name} · ${d.phone}${d.appointment ? " · " + d.appointment : ""}`,
+      url: "/admin/enquiries",
+      tag: "enquiry",
+    });
+  } catch (e) {
+    console.error("[enquiries] push failed:", e);
   }
 
   return NextResponse.json({ ok: true, id: enquiry.id });

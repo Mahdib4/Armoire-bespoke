@@ -42,6 +42,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
   const [size, setSize] = useState(availableSizes[0]?.label ?? product.sizeOptions[0]?.label ?? "");
   const [added, setAdded] = useState(false);
   const [chartOpen, setChartOpen] = useState(false);
+  const [showMeas, setShowMeas] = useState(false);
   const [refOpen, setRefOpen] = useState<string | null>(null);
   const [sel, setSel] = useState<Record<string, string>>(
     Object.fromEntries(product.customizations.map((c) => [c.name, c.choices[0] ?? ""]))
@@ -55,6 +56,8 @@ export default function ProductPanel({ product }: { product: ProductView }) {
     const selections = isTailor
       ? sel
       : { ...(product.colors.length ? { Colour: color } : {}), ...(product.sizeOptions.length ? { Size: size } : {}) };
+    // Measurements: required-ish for Tailor Made, optional for Ready Made (minor alterations).
+    const filledMeas = Object.fromEntries(Object.entries(meas).filter(([, v]) => v.trim()));
     add({
       productId: product.id,
       slug: product.slug,
@@ -65,9 +68,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
       image: product.image,
       size: isTailor ? undefined : size,
       selections,
-      measurements: isTailor
-        ? Object.fromEntries(Object.entries(meas).filter(([, v]) => v.trim()))
-        : undefined,
+      measurements: Object.keys(filledMeas).length ? filledMeas : undefined,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2600);
@@ -138,6 +139,39 @@ export default function ProductPanel({ product }: { product: ProductView }) {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Optional measurements for Ready Made (e.g. minor kurta alterations) — hidden by default */}
+          {product.measurements.length > 0 && (
+            <div className="ppanel-block">
+              <button
+                type="button"
+                className="ppanel-optmeas"
+                onClick={() => setShowMeas((v) => !v)}
+                aria-expanded={showMeas}
+              >
+                <span className="ppanel-optmeas-sign">{showMeas ? "−" : "+"}</span>
+                Add optional measurements <em>for minor alterations</em>
+              </button>
+              {showMeas && (
+                <div className="meas-grid">
+                  {product.measurements.map((m) => (
+                    <label key={m.label} className="meas-field">
+                      <span>
+                        {m.label} <em>({m.unit})</em>
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="—"
+                        value={meas[m.label] || ""}
+                        onChange={(e) => setMeas((p) => ({ ...p, [m.label]: e.target.value }))}
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </>

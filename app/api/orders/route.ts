@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
-import { orderPublicId } from "@/lib/format";
+import { sendAdminPush } from "@/lib/push";
+import { formatTk, orderPublicId } from "@/lib/format";
 
 export const runtime = "nodejs";
 
@@ -88,6 +89,32 @@ export async function POST(req: Request) {
     },
   });
 
+  // Decrement Ready-Made inventory by the ordered size. Tailor-Made pieces are
+  // made-to-measure and hold no stock, so their orders never touch inventory.
+  for (const it of items) {
+    const p = byId.get(it.productId);
+    if (!p || p.type !== "READYMADE" || !p.sizeOptions) continue;
+    try {
+      const sizes: { label: string; stock: number }[] = JSON.parse(p.sizeOptions);
+      let changed = false;
+      for (const s of sizes) {
+        if (it.size && s.label === it.size) {
+          s.stock = Math.max(0, (s.stock || 0) - it.qty);
+          changed = true;
+        }
+      }
+      if (changed) {
+        const allOut = sizes.every((s) => (s.stock || 0) <= 0);
+        await prisma.product.update({
+          where: { id: p.id },
+          data: { sizeOptions: JSON.stringify(sizes), outOfStock: allOut },
+        });
+      }
+    } catch (e) {
+      console.error("[orders] stock update failed:", e);
+    }
+  }
+
   // Fire confirmation emails (customer + owner). Non-fatal if it fails.
   let emailed = false;
   try {
@@ -112,6 +139,18 @@ export async function POST(req: Request) {
     emailed = res.sent;
   } catch (e) {
     console.error("[orders] email failed:", e);
+  }
+
+  // Web Push to admin browsers (best-effort).
+  try {
+    await sendAdminPush({
+      title: "New order received",
+      body: `${customer.name} · ${formatTk(subtotal)} · ${lineData.length} item(s)`,
+      url: "/admin/orders",
+      tag: "order",
+    });
+  } catch (e) {
+    console.error("[orders] push failed:", e);
   }
 
   return NextResponse.json({ ok: true, publicId: order.publicId, emailed });

@@ -6,10 +6,20 @@ export type Settings = Record<string, string>;
 
 // cache() dedupes identical calls within a single render (e.g. layout + page,
 // or generateMetadata + page), cutting DB round-trips roughly in half.
+// Official brand social links — used as defaults so the icons always render,
+// even if an admin hasn't set them in Site Settings yet. Admin values override.
+const BRAND_DEFAULTS: Settings = {
+  facebook: "https://www.facebook.com/profile.php?id=61583944840199",
+  instagram: "https://www.instagram.com/armoirebespoke",
+};
+
 export const getSettings = cache(async (): Promise<Settings> => {
   const rows = await prisma.siteSetting.findMany();
   const out: Settings = {};
   for (const r of rows) out[r.key] = r.value;
+  for (const [key, value] of Object.entries(BRAND_DEFAULTS)) {
+    if (!out[key]) out[key] = value;
+  }
   return out;
 });
 
