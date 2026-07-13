@@ -5,6 +5,7 @@ import Uploader from "./Uploader";
 import DeleteButton from "./DeleteButton";
 
 type Spec = { label: string; value: string };
+type SizeOpt = { label: string; stock: number };
 type ProductForm = {
   id: string;
   name: string;
@@ -12,14 +13,19 @@ type ProductForm = {
   categoryId: string;
   type: "CUSTOM" | "READYMADE";
   priceTk: number;
+  tailoringCharge: number;
   description: string;
   fabric: string;
   sizeChartUrl: string;
   order: number;
   active: boolean;
   featured: boolean;
+  outOfStock: boolean;
+  colors: string[];
+  sizeOptions: SizeOpt[];
   specs: Spec[];
   images: string[];
+  featuredIndex: number;
   customizationKinds: string[];
 };
 
@@ -36,16 +42,26 @@ export default function ProductEditor({
   const [f, setF] = useState<ProductForm>(product);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const upd = <K extends keyof ProductForm>(k: K, v: ProductForm[K]) => setF((p) => ({ ...p, [k]: v }));
 
-  const upd = <K extends keyof ProductForm>(k: K, v: ProductForm[K]) =>
-    setF((p) => ({ ...p, [k]: v }));
+  const isTailor = f.type === "CUSTOM";
 
   const moveImage = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= f.images.length) return;
     const imgs = [...f.images];
     [imgs[i], imgs[j]] = [imgs[j], imgs[i]];
-    upd("images", imgs);
+    let fi = f.featuredIndex;
+    if (fi === i) fi = j;
+    else if (fi === j) fi = i;
+    setF((p) => ({ ...p, images: imgs, featuredIndex: fi }));
+  };
+  const removeImage = (i: number) => {
+    const imgs = f.images.filter((_, x) => x !== i);
+    let fi = f.featuredIndex;
+    if (i === fi) fi = 0;
+    else if (i < fi) fi -= 1;
+    setF((p) => ({ ...p, images: imgs, featuredIndex: Math.max(0, Math.min(fi, imgs.length - 1)) }));
   };
 
   const save = async () => {
@@ -60,18 +76,23 @@ export default function ProductEditor({
           categoryId: f.categoryId,
           type: f.type,
           priceTk: Number(f.priceTk),
+          tailoringCharge: Number(f.tailoringCharge),
           description: f.description || null,
           fabric: f.fabric || null,
           sizeChartUrl: f.sizeChartUrl || null,
           order: Number(f.order),
           active: f.active,
           featured: f.featured,
+          outOfStock: f.outOfStock,
+          colors: f.colors.filter((c) => c.trim()),
+          sizeOptions: f.sizeOptions.filter((s) => s.label.trim()).map((s) => ({ label: s.label, stock: Number(s.stock) || 0 })),
           specs: f.specs.filter((s) => s.label.trim()),
           images: f.images,
+          featuredIndex: f.featuredIndex,
           customizationKinds: f.customizationKinds,
         }),
       });
-      if (!res.ok) throw new Error("Save failed");
+      if (!res.ok) throw new Error();
       setMsg({ ok: true, text: "Saved." });
       router.refresh();
     } catch {
@@ -98,31 +119,27 @@ export default function ProductEditor({
             </select>
           </div>
           <div className="adm-field">
+            <label>Product Type</label>
+            <div className="adm-toggle">
+              <button type="button" className={f.type === "CUSTOM" ? "on" : ""} onClick={() => upd("type", "CUSTOM")}>Tailor Made</button>
+              <button type="button" className={f.type === "READYMADE" ? "on" : ""} onClick={() => upd("type", "READYMADE")}>Ready Made</button>
+            </div>
+          </div>
+          <div className="adm-field">
             <label>Price (Tk)</label>
             <input type="number" min={0} value={f.priceTk} onChange={(e) => upd("priceTk", Number(e.target.value))} />
           </div>
           <div className="adm-field">
-            <label>Product Type</label>
-            <div className="adm-toggle">
-              <button type="button" className={f.type === "CUSTOM" ? "on" : ""} onClick={() => upd("type", "CUSTOM")}>Made-to-Measure</button>
-              <button type="button" className={f.type === "READYMADE" ? "on" : ""} onClick={() => upd("type", "READYMADE")}>Ready-Made</button>
-            </div>
-          </div>
-          <div className="adm-field">
-            <label>Display Order</label>
-            <input type="number" value={f.order} onChange={(e) => upd("order", Number(e.target.value))} />
+            <label>Tailoring Charge (Tk) {isTailor ? "" : "· Tailor Made only"}</label>
+            <input type="number" min={0} value={f.tailoringCharge} onChange={(e) => upd("tailoringCharge", Number(e.target.value))} />
           </div>
           <div className="adm-field wide">
             <label>Description</label>
             <textarea rows={3} value={f.description} onChange={(e) => upd("description", e.target.value)} />
           </div>
           <div className="adm-field">
-            <label>Fabric (short)</label>
-            <input value={f.fabric} onChange={(e) => upd("fabric", e.target.value)} />
-          </div>
-          <div className="adm-field">
-            <label>Size Chart URL</label>
-            <input value={f.sizeChartUrl} onChange={(e) => upd("sizeChartUrl", e.target.value)} />
+            <label>Display Order</label>
+            <input type="number" value={f.order} onChange={(e) => upd("order", Number(e.target.value))} />
           </div>
           <div className="adm-field">
             <label>Visibility</label>
@@ -132,27 +149,59 @@ export default function ProductEditor({
             </div>
           </div>
           <div className="adm-field">
-            <label>Featured</label>
+            <label>Stock Status</label>
             <div className="adm-toggle">
-              <button type="button" className={f.featured ? "on" : ""} onClick={() => upd("featured", true)}>Yes</button>
-              <button type="button" className={!f.featured ? "on" : ""} onClick={() => upd("featured", false)}>No</button>
+              <button type="button" className={!f.outOfStock ? "on" : ""} onClick={() => upd("outOfStock", false)}>In Stock</button>
+              <button type="button" className={f.outOfStock ? "on" : ""} onClick={() => upd("outOfStock", true)}>Out of Stock</button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ready-Made inventory */}
+      <div className="adm-panel">
+        <h3>Ready-Made Inventory {isTailor && "(shown when type is Ready Made)"}</h3>
+        <div className="adm-form-grid">
+          <div className="adm-field wide">
+            <label>Colours</label>
+            <div className="chip-row" style={{ marginBottom: "0.6rem" }}>
+              {f.colors.map((c, i) => (
+                <span key={i} className="adm-tag">
+                  <input value={c} onChange={(e) => { const cs = [...f.colors]; cs[i] = e.target.value; upd("colors", cs); }} />
+                  <button type="button" onClick={() => upd("colors", f.colors.filter((_, x) => x !== i))}>✕</button>
+                </span>
+              ))}
+            </div>
+            <button className="adm-btn sm" type="button" onClick={() => upd("colors", [...f.colors, ""])}>+ Add Colour</button>
+          </div>
+          <div className="adm-field wide">
+            <label>Sizes &amp; Stock (38, 40, 42, 44…)</label>
+            {f.sizeOptions.map((s, i) => (
+              <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem", alignItems: "center" }}>
+                <input placeholder="Size" value={s.label} onChange={(e) => { const ss = [...f.sizeOptions]; ss[i] = { ...ss[i], label: e.target.value }; upd("sizeOptions", ss); }} style={{ width: 90 }} />
+                <input type="number" min={0} placeholder="Stock" value={s.stock} onChange={(e) => { const ss = [...f.sizeOptions]; ss[i] = { ...ss[i], stock: Number(e.target.value) }; upd("sizeOptions", ss); }} style={{ width: 90 }} />
+                <span style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>{s.stock <= 0 ? "out of stock" : "in stock"}</span>
+                <button className="adm-btn sm danger" type="button" onClick={() => upd("sizeOptions", f.sizeOptions.filter((_, x) => x !== i))}>✕</button>
+              </div>
+            ))}
+            <button className="adm-btn sm" type="button" onClick={() => upd("sizeOptions", [...f.sizeOptions, { label: "", stock: 5 }])}>+ Add Size</button>
           </div>
         </div>
       </div>
 
       {/* Images */}
       <div className="adm-panel">
-        <h3>Images</h3>
+        <h3>Images <span style={{ color: "var(--text-muted)", textTransform: "none", letterSpacing: 0 }}>— click the star to set the featured image; uploads are added to the end</span></h3>
         <div className="adm-imgs">
           {f.images.map((url, i) => (
-            <div className="adm-imgchip" key={url + i}>
+            <div className={`adm-imgchip ${i === f.featuredIndex ? "feat" : ""}`} key={url + i}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt="" />
-              <button title="Remove" onClick={() => upd("images", f.images.filter((_, x) => x !== i))}>✕</button>
-              <div style={{ position: "absolute", bottom: 2, left: 2, display: "flex", gap: 2 }}>
-                <button style={{ position: "static", width: 18, height: 18 }} onClick={() => moveImage(i, -1)}>‹</button>
-                <button style={{ position: "static", width: 18, height: 18 }} onClick={() => moveImage(i, 1)}>›</button>
+              <button className="imgchip-star" title="Set as featured" onClick={() => upd("featuredIndex", i)}>{i === f.featuredIndex ? "★" : "☆"}</button>
+              <button className="imgchip-x" title="Remove" onClick={() => removeImage(i)}>✕</button>
+              <div className="imgchip-move">
+                <button onClick={() => moveImage(i, -1)}>‹</button>
+                <button onClick={() => moveImage(i, 1)}>›</button>
               </div>
             </div>
           ))}
@@ -162,9 +211,25 @@ export default function ProductEditor({
         </div>
       </div>
 
-      {/* Customizations (custom only, but editable anytime) */}
+      {/* Size chart */}
       <div className="adm-panel">
-        <h3>Bespoke Options {f.type === "READYMADE" && "(shown when type is Made-to-Measure)"}</h3>
+        <h3>Size Chart</h3>
+        <div className="adm-actions" style={{ alignItems: "flex-end" }}>
+          <div className="adm-field" style={{ flex: 1 }}>
+            <label>Size Chart Image URL</label>
+            <input value={f.sizeChartUrl} onChange={(e) => upd("sizeChartUrl", e.target.value)} />
+          </div>
+          <Uploader accept="image/*" label="Upload Chart" onUploaded={(url) => upd("sizeChartUrl", url)} />
+        </div>
+        {f.sizeChartUrl && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={f.sizeChartUrl} alt="Size chart" style={{ maxWidth: 220, marginTop: "0.8rem", border: "1px solid var(--border)" }} />
+        )}
+      </div>
+
+      {/* Bespoke Options (Tailor Made) */}
+      <div className="adm-panel">
+        <h3>Bespoke Options {!isTailor && "(shown when type is Tailor Made)"}</h3>
         <div className="chip-row">
           {groups.map((g) => {
             const on = f.customizationKinds.includes(g.kind);
@@ -174,10 +239,7 @@ export default function ProductEditor({
                 key={g.kind}
                 className={`chip ${on ? "on" : ""}`}
                 onClick={() =>
-                  upd(
-                    "customizationKinds",
-                    on ? f.customizationKinds.filter((k) => k !== g.kind) : [...f.customizationKinds, g.kind]
-                  )
+                  upd("customizationKinds", on ? f.customizationKinds.filter((k) => k !== g.kind) : [...f.customizationKinds, g.kind])
                 }
               >
                 {g.name}
@@ -193,14 +255,10 @@ export default function ProductEditor({
         {f.specs.map((s, i) => (
           <div className="adm-form-grid" key={i} style={{ marginBottom: "0.6rem" }}>
             <div className="adm-field">
-              <input placeholder="Label" value={s.label} onChange={(e) => {
-                const specs = [...f.specs]; specs[i] = { ...specs[i], label: e.target.value }; upd("specs", specs);
-              }} />
+              <input placeholder="Label" value={s.label} onChange={(e) => { const specs = [...f.specs]; specs[i] = { ...specs[i], label: e.target.value }; upd("specs", specs); }} />
             </div>
             <div className="adm-field" style={{ flexDirection: "row", gap: "0.5rem" }}>
-              <input placeholder="Value" value={s.value} onChange={(e) => {
-                const specs = [...f.specs]; specs[i] = { ...specs[i], value: e.target.value }; upd("specs", specs);
-              }} />
+              <input placeholder="Value" value={s.value} onChange={(e) => { const specs = [...f.specs]; specs[i] = { ...specs[i], value: e.target.value }; upd("specs", specs); }} />
               <button className="adm-btn sm danger" type="button" onClick={() => upd("specs", f.specs.filter((_, x) => x !== i))}>✕</button>
             </div>
           </div>

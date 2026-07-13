@@ -10,14 +10,19 @@ const Schema = z.object({
   categoryId: z.string().optional(),
   type: z.enum(["CUSTOM", "READYMADE"]).optional(),
   priceTk: z.number().int().min(0).optional(),
+  tailoringCharge: z.number().int().min(0).optional(),
   description: z.string().max(2000).nullable().optional(),
   fabric: z.string().max(200).nullable().optional(),
   sizeChartUrl: z.string().max(500).nullable().optional(),
   order: z.number().int().optional(),
   active: z.boolean().optional(),
   featured: z.boolean().optional(),
+  outOfStock: z.boolean().optional(),
+  colors: z.array(z.string()).optional(),
+  sizeOptions: z.array(z.object({ label: z.string(), stock: z.number().int().min(0) })).optional(),
   specs: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
   images: z.array(z.string().min(1)).optional(),
+  featuredIndex: z.number().int().min(0).optional(),
   customizationKinds: z.array(z.string()).optional(),
 });
 
@@ -41,20 +46,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         categoryId: d.categoryId,
         type: d.type,
         priceTk: d.priceTk,
+        tailoringCharge: d.tailoringCharge,
         description: d.description,
         fabric: d.fabric,
         sizeChartUrl: d.sizeChartUrl,
         order: d.order,
         active: d.active,
         featured: d.featured,
+        outOfStock: d.outOfStock,
+        colors: d.colors ? JSON.stringify(d.colors) : undefined,
+        sizeOptions: d.sizeOptions ? JSON.stringify(d.sizeOptions) : undefined,
         specs: d.specs ? JSON.stringify(d.specs) : undefined,
       },
     });
 
     if (d.images) {
+      const featIdx = d.featuredIndex ?? 0;
       await tx.productImage.deleteMany({ where: { productId: id } });
       await tx.productImage.createMany({
-        data: d.images.map((url, i) => ({ productId: id, url, order: i })),
+        data: d.images.map((url, i) => ({ productId: id, url, order: i, featured: i === featIdx })),
       });
     }
 

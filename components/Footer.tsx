@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SocialIcons from "./SocialIcons";
 import type { Settings } from "@/lib/data";
 
 export default function Footer({
@@ -8,13 +9,17 @@ export default function Footer({
   settings: Settings;
   categories: { slug: string; name: string }[];
 }) {
+  const logo = settings.logoDark || "/media/brand/logo-dark.png";
+  const tagline = settings.slogan || "Tailored to Define You";
   return (
     <footer id="contact" className="ab-footer">
       <div className="ab-foot-grid">
         <div className="ab-foot-brand">
-          <div className="font-display ab-foot-word">{settings.brandShort || "ARMOIRE"}</div>
-          <div className="font-serif-i ab-foot-be">Bespoke</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logo} alt={settings.brandName || "Armoire Bespoke"} className="ab-foot-logo" />
+          <div className="ab-foot-tagline">{tagline}</div>
           <p className="ab-foot-note">{settings.footerNote}</p>
+          <SocialIcons facebook={settings.facebook} instagram={settings.instagram} className="ab-foot-social" />
         </div>
 
         <div className="ab-foot-col">
@@ -31,6 +36,7 @@ export default function Footer({
           <Link href="/#storytelling">Our Story</Link>
           <Link href="/#lookbook">Lookbook</Link>
           <Link href="/#fabric">Fabric Collection</Link>
+          <Link href="/#appointment">Book Consultation</Link>
         </div>
 
         <div className="ab-foot-col">
@@ -38,14 +44,14 @@ export default function Footer({
           <span>{settings.address}</span>
           {settings.contactPhone && <a href={`tel:${settings.contactPhone}`}>{settings.contactPhone}</a>}
           {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
-          <a href={`mailto:${settings.contactEmail}`} className="btn btn-ghost ab-foot-cta">
+          <Link href="/#appointment" className="btn btn-ghost ab-foot-cta">
             Book Consultation
-          </a>
+          </Link>
         </div>
       </div>
       <div className="ab-foot-base">
         <span>© {new Date().getFullYear()} {settings.brandName || "Armoire Bespoke"}</span>
-        <span>{settings.slogan}</span>
+        <span>{tagline}</span>
       </div>
     </footer>
   );

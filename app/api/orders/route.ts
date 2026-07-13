@@ -21,6 +21,7 @@ const OrderSchema = z.object({
     phone: z.string().min(4).max(40),
     address: z.string().max(300).optional(),
     city: z.string().max(80).optional(),
+    appointment: z.string().max(60).optional(),
     note: z.string().max(600).optional(),
   }),
   items: z.array(ItemSchema).min(1).max(30),
@@ -50,11 +51,13 @@ export async function POST(req: Request) {
     .map((it) => {
       const p = byId.get(it.productId);
       if (!p) return null;
+      // Tailor Made line price includes the tailoring charge.
+      const unit = p.type === "READYMADE" ? p.priceTk : p.priceTk + p.tailoringCharge;
       return {
         productId: p.id,
         productName: p.name,
         type: p.type,
-        priceTk: p.priceTk,
+        priceTk: unit,
         qty: it.qty,
         selections: it.selections ? JSON.stringify(it.selections) : null,
         measurements: it.measurements ? JSON.stringify(it.measurements) : null,
@@ -77,6 +80,7 @@ export async function POST(req: Request) {
       phone: customer.phone,
       address: customer.address || null,
       city: customer.city || null,
+      appointment: customer.appointment || null,
       note: customer.note || null,
       subtotalTk: subtotal,
       status: "PENDING",

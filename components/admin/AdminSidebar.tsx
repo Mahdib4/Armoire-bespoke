@@ -10,10 +10,11 @@ const NAV = [
   { href: "/admin/quotes", label: "Quotes" },
   { href: "/admin/settings", label: "Site Settings" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/enquiries", label: "Enquiries", badgeKey: "enquiries" },
   { href: "/admin/media", label: "Media Library" },
 ];
 
-export default function AdminSidebar({ email }: { email: string }) {
+export default function AdminSidebar({ email, unread = 0 }: { email: string; unread?: number }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -35,6 +36,7 @@ export default function AdminSidebar({ email }: { email: string }) {
           return (
             <Link key={n.href} href={n.href} className={active ? "active" : ""}>
               {n.label}
+              {n.badgeKey === "enquiries" && unread > 0 && <em className="adm-nav-badge">{unread}</em>}
             </Link>
           );
         })}

@@ -49,11 +49,15 @@ model Product {
   name           String
   categoryId     String
   category       Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  type           String                 @default("CUSTOM") // CUSTOM | READYMADE
+  type           String                 @default("CUSTOM") // CUSTOM (Tailor Made) | READYMADE (Ready Made)
   priceTk        Int                    @default(0)
+  tailoringCharge Int                   @default(0) // Tailor Made only
   description    String?
   specs          String? // JSON string: [{label,value}]
   fabric         String?
+  colors         String? // JSON string of colour names (Ready Made)
+  sizeOptions    String? // JSON string: [{label,stock}] (Ready Made sizes)
+  outOfStock     Boolean                @default(false)
   order          Int                    @default(0)
   active         Boolean                @default(true)
   featured       Boolean                @default(false)
@@ -71,6 +75,7 @@ model ProductImage {
   url       String
   alt       String?
   order     Int     @default(0)
+  featured  Boolean @default(false)
 }
 
 /// A configurable dimension of a bespoke garment (lapel, collar, cuff, pocket, vent, fabric).
@@ -147,11 +152,26 @@ model Order {
   phone        String
   address      String?
   city         String?
+  appointment  String? // Home Visit | Office Appointment | Virtual Consultation
   note         String?
   subtotalTk   Int         @default(0)
   status       String      @default("PENDING") // PENDING | CONFIRMED | CANCELLED
   items        OrderItem[]
   createdAt    DateTime    @default(now())
+}
+
+/// Contact / appointment enquiries submitted from the site (admin follow-up).
+model Enquiry {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  subject     String?
+  message     String?
+  type        String   @default("contact") // contact | appointment
+  appointment String? // Home Visit | Office Appointment | Virtual Consultation
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 model OrderItem {

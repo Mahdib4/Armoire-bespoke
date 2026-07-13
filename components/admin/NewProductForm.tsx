@@ -52,8 +52,8 @@ export default function NewProductForm({
         <div className="adm-field">
           <label>Type</label>
           <select value={type} onChange={(e) => setType(e.target.value as "CUSTOM" | "READYMADE")}>
-            <option value="CUSTOM">Made-to-Measure</option>
-            <option value="READYMADE">Ready-Made</option>
+            <option value="CUSTOM">Tailor Made</option>
+            <option value="READYMADE">Ready Made</option>
           </select>
         </div>
         <div className="adm-field">

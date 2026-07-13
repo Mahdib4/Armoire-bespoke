@@ -1,4 +1,5 @@
 import { getSessionUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import "./admin.css";
 
@@ -16,9 +17,11 @@ export default async function AdminLayout({
     return <div className="adm-bare">{children}</div>;
   }
 
+  const unread = await prisma.enquiry.count({ where: { read: false } }).catch(() => 0);
+
   return (
     <div className="adm-root">
-      <AdminSidebar email={user.email} />
+      <AdminSidebar email={user.email} unread={unread} />
       <div className="adm-main">{children}</div>
     </div>
   );

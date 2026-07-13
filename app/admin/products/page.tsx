@@ -51,8 +51,11 @@ export default async function AdminProducts() {
                 <td><Link href={`/admin/products/${p.id}`} className="adm-link">{p.name}</Link></td>
                 <td>{p.category.name}</td>
                 <td className="tk">{formatTk(p.priceTk)}</td>
-                <td><span className={`adm-badge ${p.type === "CUSTOM" ? "custom" : "ready"}`}>{p.type === "CUSTOM" ? "Made-to-Measure" : "Ready-Made"}</span></td>
-                <td><span className={`adm-badge ${p.active ? "on" : "off"}`}>{p.active ? "Live" : "Hidden"}</span></td>
+                <td><span className={`adm-badge ${p.type === "CUSTOM" ? "custom" : "ready"}`}>{p.type === "CUSTOM" ? "Tailor Made" : "Ready Made"}</span></td>
+                <td>
+                  <span className={`adm-badge ${p.active ? "on" : "off"}`}>{p.active ? "Live" : "Hidden"}</span>
+                  {p.outOfStock && <span className="adm-badge off" style={{ marginLeft: 4 }}>OOS</span>}
+                </td>
                 <td>
                   <div className="adm-row-actions">
                     <Link href={`/admin/products/${p.id}`} className="adm-btn sm">Edit</Link>

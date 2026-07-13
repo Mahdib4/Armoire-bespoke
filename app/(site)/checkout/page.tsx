@@ -15,8 +15,10 @@ export default function CheckoutPage() {
     phone: "",
     address: "",
     city: "",
+    appointment: "",
     note: "",
   });
+  const hasTailor = items.some((i) => i.type === "CUSTOM");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,8 +104,22 @@ export default function CheckoutPage() {
               <span>City</span>
               <input value={form.city} onChange={set("city")} />
             </label>
+            {hasTailor && (
+              <label className="field wide">
+                <span>Fitting / Appointment Preference</span>
+                <select
+                  value={form.appointment}
+                  onChange={(e) => setForm((f) => ({ ...f, appointment: e.target.value }))}
+                >
+                  <option value="">Select a preference…</option>
+                  <option value="Home Visit">Home Visit</option>
+                  <option value="Office Appointment">Office Appointment</option>
+                  <option value="Virtual Consultation">Virtual Consultation</option>
+                </select>
+              </label>
+            )}
             <label className="field wide">
-              <span>Note to the atelier</span>
+              <span>Design Notes / Special Instructions</span>
               <textarea rows={3} value={form.note} onChange={set("note")} />
             </label>
           </div>

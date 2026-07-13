@@ -30,9 +30,11 @@ export default async function SiteLayout({
       <SmoothScroll>
         <Header
           logo={settings.logoDark || "/media/brand/logo-dark.png"}
-          slogan={settings.slogan || "Tailored to define you"}
+          slogan={settings.slogan || "Tailored to Define You"}
           brand={settings.brandName || "Armoire Bespoke"}
           items={items}
+          facebook={settings.facebook}
+          instagram={settings.instagram}
         />
         <main>{children}</main>
         <Footer settings={settings} categories={categories} />

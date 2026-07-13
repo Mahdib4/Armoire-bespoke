@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { animate, stagger } from "animejs";
 import { useCart } from "@/lib/cart";
+import SocialIcons from "./SocialIcons";
 
 export type NavItem = { label: string; href: string };
 
@@ -12,11 +13,15 @@ export default function Header({
   slogan,
   brand,
   items,
+  facebook,
+  instagram,
 }: {
   logo: string;
   slogan: string;
   brand: string;
   items: NavItem[];
+  facebook?: string;
+  instagram?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -85,9 +90,10 @@ export default function Header({
           ))}
         </nav>
         <div className="ab-overlay-foot mlink">
-          <a href="#contact" onClick={() => setOpen(false)} className="btn btn-ghost">
+          <Link href="/#appointment" onClick={() => setOpen(false)} className="btn btn-ghost">
             Book Consultation
-          </a>
+          </Link>
+          <SocialIcons facebook={facebook} instagram={instagram} className="ab-overlay-social" />
         </div>
       </div>
     </>

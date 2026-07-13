@@ -107,6 +107,55 @@ function shell(title: string, intro: string, o: OrderEmailData): string {
   </div>`;
 }
 
+export type EnquiryEmailData = {
+  name: string;
+  phone: string;
+  email?: string | null;
+  subject?: string | null;
+  message?: string | null;
+  type: string;
+  appointment?: string | null;
+};
+
+/** Notifies the owner of a new customer enquiry / appointment request. */
+export async function sendEnquiryEmail(e: EnquiryEmailData): Promise<{ sent: boolean }> {
+  const owner = process.env.OWNER_EMAIL;
+  const t = transport();
+  const from = process.env.MAIL_FROM || "Armoire Bespoke <no-reply@armoirebespoke.com>";
+  const label = e.type === "appointment" ? "Appointment request" : "New enquiry";
+
+  if (!t || !owner) {
+    console.log(`\n[email:preview] ${label} from ${e.name} <${e.phone}${e.email ? " / " + e.email : ""}>`);
+    if (e.appointment) console.log(`[email:preview] preference: ${e.appointment}`);
+    if (e.message) console.log(`[email:preview] message: ${e.message}`);
+    return { sent: false };
+  }
+
+  const html = `
+  <div style="background:${BG};padding:28px 0;font-family:Arial,sans-serif">
+    <div style="max-width:560px;margin:0 auto;background:${CARD};border:1px solid #242424;padding:28px 30px">
+      <div style="color:${GOLD};font-family:Georgia,serif;letter-spacing:.2em;font-size:12px;text-transform:uppercase">${label}</div>
+      <h1 style="color:${IVORY};font-family:Georgia,serif;font-weight:normal;font-size:20px;margin:8px 0 16px">${e.name}</h1>
+      <table style="width:100%;color:#b8b2a6;font-size:14px;line-height:1.8">
+        <tr><td style="color:#8f8a80;width:120px">Phone</td><td>${e.phone}</td></tr>
+        ${e.email ? `<tr><td style="color:#8f8a80">Email</td><td>${e.email}</td></tr>` : ""}
+        ${e.appointment ? `<tr><td style="color:#8f8a80">Preference</td><td style="color:${GOLD}">${e.appointment}</td></tr>` : ""}
+        ${e.subject ? `<tr><td style="color:#8f8a80">Subject</td><td>${e.subject}</td></tr>` : ""}
+      </table>
+      ${e.message ? `<p style="color:${IVORY};font-size:14px;line-height:1.7;margin-top:16px;border-top:1px solid #242424;padding-top:16px">${e.message}</p>` : ""}
+    </div>
+  </div>`;
+
+  await t.sendMail({
+    from,
+    to: owner,
+    replyTo: e.email || undefined,
+    subject: `${label} — ${e.name} (${e.phone})`,
+    html,
+  });
+  return { sent: true };
+}
+
 export async function sendOrderEmails(o: OrderEmailData): Promise<{ sent: boolean }> {
   const t = transport();
   const from = process.env.MAIL_FROM || "Armoire Bespoke <no-reply@armoirebespoke.com>";

@@ -42,29 +42,43 @@ export default async function ProductPage({
   if (!product || !product.active) notFound();
 
   const currency = settings.currency || "Tk";
+  const isReady = product.type === "READYMADE";
+  // Featured image first, then the rest in order.
+  const gallery = [...product.images].sort(
+    (a, b) => Number(b.featured) - Number(a.featured) || a.order - b.order
+  );
   const view: ProductView = {
     id: product.id,
     slug: product.slug,
     name: product.name,
     type: product.type === "READYMADE" ? "READYMADE" : "CUSTOM",
     priceTk: product.priceTk,
+    tailoringCharge: product.tailoringCharge,
     currency,
     categoryName: product.category.name,
     description: product.description || "",
     specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
     sizeChartUrl: product.sizeChartUrl,
-    image: product.images[0]?.url || "/media/brand/logo-dark.png",
-    measurements: product.category.measurementFields.map((m) => ({
-      label: m.label,
-      unit: m.unit,
-      hint: m.hint,
-    })),
-    customizations: product.customizations.map((pc) => ({
-      kind: pc.group.kind,
-      name: pc.group.name,
-      referenceUrl: pc.group.referenceUrl,
-      choices: pc.group.choices.map((c) => c.label),
-    })),
+    image: gallery[0]?.url || "/media/brand/logo-dark.png",
+    outOfStock: product.outOfStock,
+    tailoringNote:
+      settings.tailoringNote ||
+      "Final price may vary depending on the selected fabric and customization options.",
+    // Strict separation: Tailor-Made never carries colour/size; Ready-Made never
+    // carries bespoke options or measurements (not even in the payload).
+    measurements: isReady
+      ? []
+      : product.category.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),
+    customizations: isReady
+      ? []
+      : product.customizations.map((pc) => ({
+          kind: pc.group.kind,
+          name: pc.group.name,
+          referenceUrl: pc.group.referenceUrl,
+          choices: pc.group.choices.map((c) => c.label),
+        })),
+    colors: isReady ? parseJSON<string[]>(product.colors, []) : [],
+    sizeOptions: isReady ? parseJSON<{ label: string; stock: number }[]>(product.sizeOptions, []) : [],
   };
 
   const related = await prisma.product.findMany({
@@ -86,7 +100,7 @@ export default async function ProductPage({
 
       <div className="pdp-grid">
         <ProductGallery
-          images={product.images.map((im) => ({ url: im.url, alt: im.alt }))}
+          images={gallery.map((im) => ({ url: im.url, alt: im.alt }))}
           name={product.name}
         />
         <ProductPanel product={view} />
