@@ -48,13 +48,18 @@ export default function ProductPanel({ product }: { product: ProductView }) {
     Object.fromEntries(product.customizations.map((c) => [c.name, c.choices[0] ?? ""]))
   );
   const [meas, setMeas] = useState<Record<string, string>>({});
+  const [sleeveButtons, setSleeveButtons] = useState("2");
+
+  // Blazer cuff style: when "Sleeve Buttons" is chosen, reveal a 2/3/4/5 count picker.
+  const cuffStyle = product.customizations.find((c) => c.kind === "cuff-style");
+  const showSleeveCount = !!cuffStyle && sel[cuffStyle.name] === "Sleeve Buttons";
 
   // Tailor Made line price includes the tailoring charge.
   const unitPrice = isTailor ? product.priceTk + product.tailoringCharge : product.priceTk;
 
   const addToCart = () => {
     const selections = isTailor
-      ? sel
+      ? { ...sel, ...(showSleeveCount ? { "Sleeve Buttons": sleeveButtons } : {}) }
       : { ...(product.colors.length ? { Colour: color } : {}), ...(product.sizeOptions.length ? { Size: size } : {}) };
     // Measurements: required-ish for Tailor Made, optional for Ready Made (minor alterations).
     const filledMeas = Object.fromEntries(Object.entries(meas).filter(([, v]) => v.trim()));
@@ -203,6 +208,27 @@ export default function ProductPanel({ product }: { product: ProductView }) {
                 </button>
               ))}
             </div>
+
+            {/* Cuff style → Sleeve Buttons reveals a number-of-buttons picker. */}
+            {c.kind === "cuff-style" && sel[c.name] === "Sleeve Buttons" && (
+              <div className="ppanel-subopt">
+                <div className="ppanel-sublabel">Number of sleeve buttons</div>
+                <div className="radio-row">
+                  {["2", "3", "4", "5"].map((n) => (
+                    <label key={n} className={`radio-chip ${sleeveButtons === n ? "on" : ""}`}>
+                      <input
+                        type="radio"
+                        name="sleeve-buttons"
+                        value={n}
+                        checked={sleeveButtons === n}
+                        onChange={() => setSleeveButtons(n)}
+                      />
+                      {n}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
 

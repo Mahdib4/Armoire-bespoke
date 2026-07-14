@@ -386,9 +386,11 @@ html.lenis body {
 .ab-brand {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;      /* centre the slogan beneath the logo as a balanced lockup */
+  gap: 0.3rem;
   text-decoration: none;
   line-height: 1;
+  width: fit-content;       /* shrink the lockup to the logo's width */
 }
 .ab-logo {
   height: clamp(46px, 4.9vw, 66px);
@@ -400,11 +402,13 @@ html.lenis body {
   height: clamp(40px, 4vw, 52px);
 }
 .ab-slogan {
-  font-size: 0.72rem;
-  letter-spacing: 0.44em;
+  width: 100%;
+  text-align: center;       /* centre the tracked slogan under the logo */
+  font-size: 0.7rem;
+  letter-spacing: 0.19em;   /* tuned so the slogan spans ~the logo's width */
+  text-indent: 0.19em;      /* offset the trailing letter-space so it reads optically centred */
   text-transform: uppercase;
   color: #ffffff;
-  padding-left: 4px;
 }
 .ab-header.scrolled .ab-slogan {
   opacity: 0.85;
@@ -689,6 +693,9 @@ html.lenis body {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Fallback backdrop shown when a category has no banner image yet
+     (e.g. an upcoming collection). Hidden behind the media when present. */
+  background: radial-gradient(ellipse at 50% 32%, #17140e 0%, #0b0b0b 68%);
 }
 .cat-banner-media {
   position: absolute;
@@ -1013,18 +1020,34 @@ html.lenis body {
   z-index: 1;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 12%, rgba(0, 0, 0, 0.15) 60%, rgba(0, 0, 0, 0.35));
 }
-.swatch span {
+.swatch-cap {
   position: relative;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+}
+.swatch.has-img .swatch-cap { align-self: end; }
+.swatch-name {
   font-family: var(--font-cormorant), serif;
   font-size: 1.05rem;
   color: var(--cream);
   letter-spacing: 0.04em;
+  line-height: 1.2;
 }
-.swatch.has-img span {
-  align-self: end;
+.swatch.has-img .swatch-name {
   color: #fff;
   font-weight: 500;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+.swatch-price {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+}
+.swatch.has-img .swatch-price {
+  color: var(--gold-light);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 .sw-0 { background: linear-gradient(135deg, #2a2620, #171410); }
@@ -1276,6 +1299,36 @@ html.lenis body {
 }
 .chip:hover { border-color: var(--gold-dim); }
 .chip.on { border-color: var(--gold); color: var(--gold); background: rgba(201, 168, 76, 0.08); }
+
+/* Conditional sub-option (e.g. cuff → number of sleeve buttons) */
+.ppanel-subopt {
+  margin-top: 0.9rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid rgba(201, 168, 76, 0.28);
+}
+.ppanel-sublabel {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.55rem;
+}
+.radio-row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.radio-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border);
+  color: var(--cream);
+  cursor: pointer;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  transition: all 0.3s var(--ease);
+}
+.radio-chip:hover { border-color: var(--gold-dim); }
+.radio-chip.on { border-color: var(--gold); color: var(--gold); background: rgba(201, 168, 76, 0.08); }
+.radio-chip input { accent-color: var(--gold); margin: 0; }
 .meas-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

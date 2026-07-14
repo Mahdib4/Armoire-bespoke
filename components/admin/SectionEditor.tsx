@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
 
-type Swatch = { name: string; image: string };
+type Swatch = { name: string; image: string; price: number };
 
 function parseSwatches(config: string): Swatch[] {
   try {
@@ -11,8 +11,12 @@ function parseSwatches(config: string): Swatch[] {
     if (!Array.isArray(raw)) return [];
     return raw.map((s: unknown) =>
       typeof s === "string"
-        ? { name: s, image: "" }
-        : { name: (s as Swatch).name || "", image: (s as Swatch).image || "" }
+        ? { name: s, image: "", price: 0 }
+        : {
+            name: (s as Swatch).name || "",
+            image: (s as Swatch).image || "",
+            price: Number((s as Swatch).price) || 0,
+          }
     );
   } catch {
     return [];
@@ -44,7 +48,9 @@ export default function SectionEditor({
         body: f.body || null,
       };
       if (isFabric) {
-        const cleaned = swatches.filter((s) => s.name.trim());
+        const cleaned = swatches
+          .filter((s) => s.name.trim())
+          .map((s) => ({ name: s.name.trim(), image: s.image, price: Number(s.price) || 0 }));
         body.config = JSON.stringify({ swatches: cleaned });
       }
       const res = await fetch(`/api/admin/sections/${f.key}`, {
@@ -101,6 +107,14 @@ export default function SectionEditor({
                   value={s.name}
                   onChange={(e) => setSwatch(i, { name: e.target.value })}
                 />
+                <input
+                  className="adm-swatch-price"
+                  type="number"
+                  min={0}
+                  placeholder="Price / yard (Tk)"
+                  value={s.price || ""}
+                  onChange={(e) => setSwatch(i, { price: Number(e.target.value) || 0 })}
+                />
                 <div className="adm-swatch-actions">
                   <Uploader accept="image/*" label={s.image ? "Replace" : "Add photo"} onUploaded={(url) => setSwatch(i, { image: url })} />
                   {s.image && (
@@ -123,7 +137,7 @@ export default function SectionEditor({
             className="adm-btn sm"
             type="button"
             style={{ marginTop: "0.7rem" }}
-            onClick={() => setSwatches((list) => [...list, { name: "", image: "" }])}
+            onClick={() => setSwatches((list) => [...list, { name: "", image: "", price: 0 }])}
           >
             + Add Fabric
           </button>

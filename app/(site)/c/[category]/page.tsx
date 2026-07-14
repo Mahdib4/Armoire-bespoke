@@ -72,7 +72,10 @@ export default async function CategoryPage({
       {cat.products.length > 0 ? (
         <CategoryTabs readyMade={readyMade} tailorMade={tailorMade} currency={currency} />
       ) : (
-        <p className="clist-empty">This collection is being tailored. Please check back soon.</p>
+        <p className="clist-empty">
+          New collections are on their way — check back soon for seasonal pieces, special events and
+          exclusive launches.
+        </p>
       )}
 
       <div className="clist-back">
