@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import ProductGallery from "@/components/ProductGallery";
 import ProductPanel, { type ProductView } from "@/components/ProductPanel";
 import ProductRail from "@/components/ProductRail";
-import { getProductBySlug, getSettings, getAllProductSlugs } from "@/lib/data";
+import { getProductBySlug, getSettings, getAllProductSlugs, getFabricPrices } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
@@ -38,7 +38,11 @@ export default async function ProductPage({
   params: Promise<{ product: string }>;
 }) {
   const { product: slug } = await params;
-  const [product, settings] = await Promise.all([getProductBySlug(slug), getSettings()]);
+  const [product, settings, fabricPrices] = await Promise.all([
+    getProductBySlug(slug),
+    getSettings(),
+    getFabricPrices(),
+  ]);
   if (!product || !product.active) notFound();
 
   const currency = settings.currency || "Tk";
@@ -56,6 +60,8 @@ export default async function ProductPage({
     tailoringCharge: product.tailoringCharge,
     currency,
     categoryName: product.category.name,
+    categorySlug: product.category.slug,
+    fabricPrices,
     description: product.description || "",
     specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
     sizeChartUrl: product.sizeChartUrl,

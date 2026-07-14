@@ -16,6 +16,9 @@ export type ProductView = {
   tailoringCharge: number;
   currency: string;
   categoryName: string;
+  categorySlug: string;
+  /** Fabric name → price per yard (from the Fabric Collection section). */
+  fabricPrices: Record<string, number>;
   description: string;
   specs: { label: string; value: string }[];
   sizeChartUrl: string | null;
@@ -54,6 +57,19 @@ export default function ProductPanel({ product }: { product: ProductView }) {
   const cuffStyle = product.customizations.find((c) => c.kind === "cuff-style");
   const showSleeveCount = !!cuffStyle && sel[cuffStyle.name] === "Sleeve Buttons";
 
+  // Blazer fabric pricing: the selected fabric drives a per-yard + 4-yard price
+  // readout (a suit takes ~4 yards). Falls back to the "From" row if unpriced.
+  const fabricGroup = product.customizations.find((c) => c.kind === "fabric");
+  const selectedFabric = fabricGroup ? sel[fabricGroup.name] : "";
+  const fabricYard = product.fabricPrices[selectedFabric] ?? 0;
+  const showFabricPrice = isTailor && product.categorySlug === "blazer" && fabricYard > 0;
+
+  // Ready-Made kurtas & shirts show their size chart inline, above Add to Cart.
+  const inlineChart =
+    !isTailor && ["kurta", "shirt"].includes(product.categorySlug)
+      ? product.sizeChartUrl || `/media/sizecharts/${product.categorySlug}.jpg`
+      : null;
+
   // Tailor Made line price includes the tailoring charge.
   const unitPrice = isTailor ? product.priceTk + product.tailoringCharge : product.priceTk;
 
@@ -85,7 +101,10 @@ export default function ProductPanel({ product }: { product: ProductView }) {
       <h1 className="ppanel-name">{product.name}</h1>
 
       <div className="ppanel-pricerow">
-        <span className="ppanel-price tk">{formatTk(product.priceTk, product.currency)}</span>
+        <span className="ppanel-price tk">
+          {isTailor && <em className="ppanel-from">Starts from</em>}
+          {formatTk(product.priceTk, product.currency)}
+        </span>
         <span className={`ppanel-type ${isTailor ? "tm" : "rm"}`}>
           {isTailor ? "Tailor Made" : "Ready Made"}
         </span>
@@ -99,11 +118,30 @@ export default function ProductPanel({ product }: { product: ProductView }) {
             <span>Tailoring charge</span>
             <span className="tk">{formatTk(product.tailoringCharge, product.currency)}</span>
           </div>
-          <div className="ppanel-charge-row total">
-            <span>From</span>
-            <span className="tk">{formatTk(unitPrice, product.currency)}</span>
-          </div>
-          <p className="ppanel-note">{product.tailoringNote}</p>
+          {showFabricPrice ? (
+            <>
+              {/* Fabric pricing follows the selected fabric (per yard + 4-yard total). */}
+              <div className="ppanel-charge-row">
+                <span>Fabric price (per yard)</span>
+                <span className="tk">{formatTk(fabricYard, product.currency)}</span>
+              </div>
+              <div className="ppanel-charge-row total">
+                <span>Fabric for 4 yards</span>
+                <span className="tk">{formatTk(fabricYard * 4, product.currency)}</span>
+              </div>
+              <p className="ppanel-note">
+                A suit usually takes 4 yards to make. {product.tailoringNote}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="ppanel-charge-row total">
+                <span>From</span>
+                <span className="tk">{formatTk(unitPrice, product.currency)}</span>
+              </div>
+              <p className="ppanel-note">{product.tailoringNote}</p>
+            </>
+          )}
         </div>
       )}
 
@@ -188,14 +226,16 @@ export default function ProductPanel({ product }: { product: ProductView }) {
           <div className="ppanel-block" key={c.name}>
             <div className="ppanel-label">
               {c.name}
-              {c.referenceUrl && (
-                <button
-                  className="linkish"
-                  onClick={() => setRefOpen(refOpen === c.name ? null : c.referenceUrl)}
-                >
-                  View styles
-                </button>
-              )}
+              {c.referenceUrl &&
+                /* Shirts: no style-reference lightbox on cuff & pocket (client request). */
+                !(product.categorySlug === "shirt" && (c.kind === "cuff" || c.kind === "pocket")) && (
+                  <button
+                    className="linkish"
+                    onClick={() => setRefOpen(refOpen === c.name ? null : c.referenceUrl)}
+                  >
+                    View styles
+                  </button>
+                )}
             </div>
             <div className="chip-row">
               {c.choices.map((ch) => (
@@ -258,6 +298,17 @@ export default function ProductPanel({ product }: { product: ProductView }) {
         </div>
       )}
 
+      {/* Ready-Made kurta & shirt: size chart shown inline, just above Add to Cart. */}
+      {inlineChart && (
+        <div className="ppanel-block ppanel-chart">
+          <div className="ppanel-label">Size Chart</div>
+          <button type="button" className="ppanel-chart-frame" onClick={() => setChartOpen(true)} aria-label="Enlarge size chart">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={inlineChart} alt={`${product.categoryName} size chart`} />
+          </button>
+        </div>
+      )}
+
       {/* Quantity + add */}
       <div className="ppanel-buy">
         <div className="qty">
@@ -299,7 +350,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
           <div className="lightbox-inner" onClick={(e) => e.stopPropagation()}>
             <button className="lightbox-x" onClick={() => { setChartOpen(false); setRefOpen(null); }}>✕</button>
             <Image
-              src={(chartOpen ? product.sizeChartUrl : refOpen) as string}
+              src={(chartOpen ? inlineChart || product.sizeChartUrl : refOpen) as string}
               alt="Reference"
               width={900}
               height={1200}

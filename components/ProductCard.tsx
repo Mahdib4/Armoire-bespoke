@@ -56,7 +56,10 @@ export default function ProductCard({
         </div>
         <div className="pcard-info" data-atropos-offset="3">
           <h3>{product.name}</h3>
-          <p className="tk">{formatTk(product.priceTk, currency)}</p>
+          <p className="tk">
+            {product.type === "CUSTOM" && <em className="pcard-from">Starts from </em>}
+            {formatTk(product.priceTk, currency)}
+          </p>
         </div>
       </Atropos>
     </Link>
