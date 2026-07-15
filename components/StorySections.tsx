@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import GoldDust from "./GoldDust";
+import { formatTk } from "@/lib/format";
 
 type Section = { title?: string | null; subtitle?: string | null; body?: string | null; config?: string | null };
 
@@ -75,7 +76,7 @@ export function Lookbook({
   );
 }
 
-type Swatch = string | { name: string; image?: string };
+type Swatch = string | { name: string; image?: string; price?: number | string };
 
 export function Fabric({
   section,
@@ -86,9 +87,12 @@ export function Fabric({
   try {
     raw = section?.config ? JSON.parse(section.config).swatches ?? [] : [];
   } catch {}
-  // Accept both legacy string swatches and { name, image } objects.
+  // Accept legacy string swatches and { name, image, price } objects.
+  // price = Tk per yard (0/blank hides the price line).
   const swatches = raw.map((s) =>
-    typeof s === "string" ? { name: s, image: "" } : { name: s.name, image: s.image || "" }
+    typeof s === "string"
+      ? { name: s, image: "", price: 0 }
+      : { name: s.name, image: s.image || "", price: Number(s.price) || 0 }
   );
   return (
     <section id="fabric" className="sec fabric-sec">
@@ -111,7 +115,10 @@ export function Fabric({
                 className="swatch-img"
               />
             )}
-            <span>{s.name}</span>
+            <span className="swatch-cap">
+              <span className="swatch-name">{s.name}</span>
+              {s.price > 0 && <span className="swatch-price tk">{formatTk(s.price)} / yd</span>}
+            </span>
           </div>
         ))}
       </div>

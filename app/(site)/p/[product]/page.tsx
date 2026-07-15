@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import ProductGallery from "@/components/ProductGallery";
 import ProductPanel, { type ProductView } from "@/components/ProductPanel";
 import ProductRail from "@/components/ProductRail";
-import { getProductBySlug, getSettings, getAllProductSlugs } from "@/lib/data";
+import { getProductBySlug, getSettings, getAllProductSlugs, getFabricPrices } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
@@ -38,7 +38,11 @@ export default async function ProductPage({
   params: Promise<{ product: string }>;
 }) {
   const { product: slug } = await params;
-  const [product, settings] = await Promise.all([getProductBySlug(slug), getSettings()]);
+  const [product, settings, fabricPrices] = await Promise.all([
+    getProductBySlug(slug),
+    getSettings(),
+    getFabricPrices(),
+  ]);
   if (!product || !product.active) notFound();
 
   const currency = settings.currency || "Tk";
@@ -47,10 +51,6 @@ export default async function ProductPage({
   const gallery = [...product.images].sort(
     (a, b) => Number(b.featured) - Number(a.featured) || a.order - b.order
   );
-  // Per-yard price for each fabric choice (drives the live tailor-made price).
-  const fabricGroup = product.customizations.find((pc) => pc.group.kind === "fabric");
-  const fabricPrices: Record<string, number> = {};
-  if (fabricGroup) for (const ch of fabricGroup.group.choices) fabricPrices[ch.label] = ch.priceTk;
   const view: ProductView = {
     id: product.id,
     slug: product.slug,
@@ -60,6 +60,8 @@ export default async function ProductPage({
     tailoringCharge: product.tailoringCharge,
     currency,
     categoryName: product.category.name,
+    categorySlug: product.category.slug,
+    fabricPrices,
     description: product.description || "",
     specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
     sizeChartUrl: product.sizeChartUrl,
@@ -83,8 +85,6 @@ export default async function ProductPage({
         })),
     colors: isReady ? parseJSON<string[]>(product.colors, []) : [],
     sizeOptions: isReady ? parseJSON<{ label: string; stock: number }[]>(product.sizeOptions, []) : [],
-    fabricYards: product.category.fabricYards,
-    fabricPrices,
   };
 
   const related = await prisma.product.findMany({

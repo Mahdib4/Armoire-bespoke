@@ -58,7 +58,6 @@ const CAT: Record<
     tagline: string;
     description: string;
     price: number;
-    yards: number; // cloth needed for a tailor-made piece
     banner: "video" | "image";
     bannerUrl?: string;
     posterUrl?: string;
@@ -74,7 +73,6 @@ const CAT: Record<
     description:
       "The blazer is where Armoire begins — a study in canvassed structure, hand-set shoulders and a lapel rolled to the exact break of your posture.",
     price: 15000,
-    yards: 2.5,
     banner: "video",
     bannerUrl: "/media/videos/blazer.mp4",
     posterUrl: "/media/videos/posters/blazer.jpg",
@@ -85,7 +83,7 @@ const CAT: Record<
       { label: "Jacket Length" },
       { label: "Waist" },
     ],
-    customization: ["lapel", "blazer-cuff", "sleeve-buttons", "pocket", "vent", "fabric"],
+    customization: ["lapel", "cuff", "pocket", "vent", "fabric"],
     specs: [
       { label: "Construction", value: "Half-canvassed, structured shoulder" },
       { label: "Closure", value: "Single-breasted, two-button" },
@@ -101,7 +99,6 @@ const CAT: Record<
     description:
       "The jungle jacket — utility tempered by tailoring. Four pockets, a relaxed drape, and cloth chosen to weather the everyday with grace.",
     price: 12000,
-    yards: 2.5,
     banner: "video",
     bannerUrl: "/media/videos/jacket.mp4",
     posterUrl: "/media/videos/posters/jacket.jpg",
@@ -127,7 +124,6 @@ const CAT: Record<
     description:
       "A shirt is the closest cloth to the man. Ours is drafted collar-first, with a yoke that sits true and a cuff turned to your wrist.",
     price: 4500,
-    yards: 2.5,
     banner: "video",
     bannerUrl: "/media/videos/shirt.mp4",
     posterUrl: "/media/videos/posters/shirt.jpg",
@@ -154,7 +150,6 @@ const CAT: Record<
     description:
       "Trousers are an exercise in balance — the rise, the taper, the break at the shoe. We cut each pair to fall clean from waist to hem.",
     price: 5500,
-    yards: 1.5,
     banner: "image",
     measurements: [
       { label: "Waist" },
@@ -180,7 +175,6 @@ const CAT: Record<
     description:
       "The kurta collection honours occasion — regal textures, sherwani-cut lines and colours drawn from ceremony, tailored to sit and move as one.",
     price: 6500,
-    yards: 2.75,
     banner: "image",
     measurements: [
       { label: "Chest" },
@@ -200,22 +194,11 @@ const CAT: Record<
   },
 };
 
-// Per-yard fabric prices (Tk). The tailor-made total = base tailoring + price/yd × yards.
-const FABRIC_PRICES: Record<string, number> = {
-  "Tropical Wool Blend": 1800,
-  "English Herringbone": 2200,
-  "Italian Flannel": 2500,
-  "Egyptian Cotton": 1500,
-  "Linen Blend": 1600,
-  "Cotton Twill": 1200,
-};
-
 // Customization groups & their choices.
 const GROUPS: {
   kind: string;
   name: string;
   refKind?: string; // matches manifest styleOptions kind
-  refUrl?: string; // explicit reference image URL (overrides refKind)
   choices: string[];
 }[] = [
   {
@@ -247,14 +230,6 @@ const GROUPS: {
   // Jacket / Kurta silhouette
   { kind: "jacket-style", name: "Style", choices: ["Safari / Jungle", "Field Jacket", "Bomber Cut"] },
   { kind: "kurta-style", name: "Style", choices: ["Sherwani-Cut", "Egyptian", "Classic Straight"] },
-  // Blazer-specific cuff + sleeve buttons
-  { kind: "blazer-cuff", name: "Cuff Style", choices: ["Functional Buttons", "Non-Functional Buttons"] },
-  {
-    kind: "sleeve-buttons",
-    name: "Sleeve Buttons",
-    refUrl: "/media/style-options/blazer-sleeve-buttons.jpg",
-    choices: ["Single Button", "Double Button", "Three Buttons", "Four Kissing Buttons", "Five Kissing Buttons"],
-  },
 ];
 
 const QUOTES: { slot: string; text: string; attribution?: string; order: number }[] = [
@@ -319,9 +294,9 @@ async function main() {
   const groupIdByKind: Record<string, string> = {};
   for (let gi = 0; gi < GROUPS.length; gi++) {
     const g = GROUPS[gi];
-    const ref =
-      g.refUrl ??
-      (g.refKind ? manifest.styleOptions.find((s) => s.kind === g.refKind)?.url ?? null : null);
+    const ref = g.refKind
+      ? manifest.styleOptions.find((s) => s.kind === g.refKind)?.url ?? null
+      : null;
     const group = await prisma.customizationGroup.create({
       data: {
         kind: g.kind,
@@ -329,11 +304,7 @@ async function main() {
         referenceUrl: ref,
         order: gi,
         choices: {
-          create: g.choices.map((label, i) => ({
-            label,
-            order: i,
-            priceTk: g.kind === "fabric" ? FABRIC_PRICES[label] ?? 0 : 0,
-          })),
+          create: g.choices.map((label, i) => ({ label, order: i })),
         },
       },
     });
@@ -365,7 +336,6 @@ async function main() {
         bannerType: cfg.banner,
         bannerUrl: bannerUrl ?? null,
         posterUrl: posterUrl ?? null,
-        fabricYards: cfg.yards,
         measurementFields: {
           create: cfg.measurements.map((m, i) => ({
             label: m.label,

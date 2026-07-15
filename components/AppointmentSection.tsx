@@ -58,13 +58,12 @@ export default function AppointmentSection({
 
       <p className="appt-message rv">{message}</p>
 
-      <div className="appt-methods">
+      <div className="appt-methods rv">
         {METHODS.map((m, i) => (
           <button
             key={m.key}
             type="button"
-            className={`appt-method rv ${pref === m.key ? "on" : ""}`}
-            style={{ transitionDelay: `${i * 0.08}s` }}
+            className={`appt-method ${pref === m.key ? "on" : ""}`}
             onClick={() => setPref(m.key)}
           >
             <span className="appt-method-idx">{String(i + 1).padStart(2, "0")}</span>

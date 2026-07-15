@@ -55,7 +55,9 @@ export default function CategoryTabs({
         </div>
       ) : (
         <p className="clist-empty">
-          No {tab === "ready" ? "ready-made" : "tailor-made"} pieces in this collection yet.
+          {tab === "ready"
+            ? "Currently, there are no Ready Made products available in stock for this category."
+            : "No tailor-made pieces in this collection yet."}
         </p>
       )}
     </div>

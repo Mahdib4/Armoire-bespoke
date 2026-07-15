@@ -60,6 +60,20 @@ export async function getSections() {
   return byKey;
 }
 
+/** Fabric name → price per yard (Tk), parsed from the Fabric Collection section.
+ *  Single source of truth for fabric pricing across the site (PDP fabric selector). */
+export const getFabricPrices = cache(async (): Promise<Record<string, number>> => {
+  const section = await prisma.section.findUnique({ where: { key: "fabric" } });
+  const out: Record<string, number> = {};
+  try {
+    const swatches = JSON.parse(section?.config || "{}").swatches ?? [];
+    for (const s of swatches) {
+      if (s && typeof s === "object" && s.name && Number(s.price) > 0) out[s.name] = Number(s.price);
+    }
+  } catch {}
+  return out;
+});
+
 export const getCategoryBySlug = cache(async (slug: string) => {
   return prisma.category.findUnique({
     where: { slug },

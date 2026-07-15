@@ -63,7 +63,7 @@ export default async function HomePage() {
         </div>
       ))}
 
-      {settings.priceChart && <PriceChart src={settings.priceChart} />}
+      <PriceChart src={settings.priceChart || "/media/price-chart.jpeg"} />
 
       <AppointmentSection
         message={
