@@ -47,6 +47,10 @@ export default async function ProductPage({
   const gallery = [...product.images].sort(
     (a, b) => Number(b.featured) - Number(a.featured) || a.order - b.order
   );
+  // Per-yard price for each fabric choice (drives the live tailor-made price).
+  const fabricGroup = product.customizations.find((pc) => pc.group.kind === "fabric");
+  const fabricPrices: Record<string, number> = {};
+  if (fabricGroup) for (const ch of fabricGroup.group.choices) fabricPrices[ch.label] = ch.priceTk;
   const view: ProductView = {
     id: product.id,
     slug: product.slug,
@@ -79,6 +83,8 @@ export default async function ProductPage({
         })),
     colors: isReady ? parseJSON<string[]>(product.colors, []) : [],
     sizeOptions: isReady ? parseJSON<{ label: string; stock: number }[]>(product.sizeOptions, []) : [],
+    fabricYards: product.category.fabricYards,
+    fabricPrices,
   };
 
   const related = await prisma.product.findMany({

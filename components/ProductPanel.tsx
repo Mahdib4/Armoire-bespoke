@@ -28,6 +28,9 @@ export type ProductView = {
   // Ready Made
   colors: string[];
   sizeOptions: SizeOption[];
+  // Tailor Made pricing (fabric-driven)
+  fabricYards: number;
+  fabricPrices: Record<string, number>; // fabric name → price per yard
 };
 
 export default function ProductPanel({ product }: { product: ProductView }) {
@@ -49,8 +52,13 @@ export default function ProductPanel({ product }: { product: ProductView }) {
   );
   const [meas, setMeas] = useState<Record<string, string>>({});
 
-  // Tailor Made line price includes the tailoring charge.
-  const unitPrice = isTailor ? product.priceTk + product.tailoringCharge : product.priceTk;
+  // Tailor Made: total = base tailoring + (selected fabric price/yard × yards needed).
+  const fabricName = product.customizations.find((c) => c.kind === "fabric")?.name ?? "Fabric";
+  const selectedFabric = sel[fabricName] ?? "";
+  const fabricPerYard = product.fabricPrices[selectedFabric] ?? 0;
+  const fabricCost = Math.round(fabricPerYard * product.fabricYards);
+  const baseTailoring = product.priceTk + product.tailoringCharge;
+  const unitPrice = isTailor ? baseTailoring + fabricCost : product.priceTk;
 
   const addToCart = () => {
     const selections = isTailor
@@ -80,22 +88,36 @@ export default function ProductPanel({ product }: { product: ProductView }) {
       <h1 className="ppanel-name">{product.name}</h1>
 
       <div className="ppanel-pricerow">
-        <span className="ppanel-price tk">{formatTk(product.priceTk, product.currency)}</span>
+        <span className="ppanel-price tk">{formatTk(isTailor ? unitPrice : product.priceTk, product.currency)}</span>
         <span className={`ppanel-type ${isTailor ? "tm" : "rm"}`}>
           {isTailor ? "Tailor Made" : "Ready Made"}
         </span>
         {soldOut && <span className="ppanel-oos">Out of Stock</span>}
       </div>
 
-      {/* Tailoring charge + variability note (Tailor Made only) */}
+      {/* Tailor Made price breakdown — updates live with the selected fabric */}
       {isTailor && (
         <div className="ppanel-charge">
           <div className="ppanel-charge-row">
             <span>Tailoring charge</span>
-            <span className="tk">{formatTk(product.tailoringCharge, product.currency)}</span>
+            <span className="tk">{formatTk(baseTailoring, product.currency)}</span>
           </div>
+          {product.fabricYards > 0 && (
+            <>
+              <div className="ppanel-charge-row">
+                <span>
+                  Fabric — {selectedFabric || "select one"}
+                  {fabricPerYard > 0 && ` · ${formatTk(fabricPerYard, product.currency)}/yd`}
+                </span>
+                <span className="tk">{formatTk(fabricCost, product.currency)}</span>
+              </div>
+              <div className="ppanel-yards">
+                <span>◆</span> {product.fabricYards} yards of cloth needed for the atelier
+              </div>
+            </>
+          )}
           <div className="ppanel-charge-row total">
-            <span>From</span>
+            <span>Total</span>
             <span className="tk">{formatTk(unitPrice, product.currency)}</span>
           </div>
           <p className="ppanel-note">{product.tailoringNote}</p>

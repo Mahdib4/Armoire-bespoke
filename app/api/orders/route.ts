@@ -42,9 +42,14 @@ export async function POST(req: Request) {
   }
   const { customer, items } = parsed.data;
 
-  // Re-price from DB (never trust client prices).
+  // Re-price from DB (never trust client prices). Include category yardage and
+  // the fabric group's per-yard prices so we can recompute the tailor-made total.
   const products = await prisma.product.findMany({
     where: { id: { in: items.map((i) => i.productId) }, active: true },
+    include: {
+      category: { select: { fabricYards: true } },
+      customizations: { include: { group: { include: { choices: true } } } },
+    },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -52,8 +57,17 @@ export async function POST(req: Request) {
     .map((it) => {
       const p = byId.get(it.productId);
       if (!p) return null;
-      // Tailor Made line price includes the tailoring charge.
-      const unit = p.type === "READYMADE" ? p.priceTk : p.priceTk + p.tailoringCharge;
+      // Tailor Made total = base tailoring + fabric (price/yard × yards needed).
+      let unit: number;
+      if (p.type === "READYMADE") {
+        unit = p.priceTk;
+      } else {
+        const fabricGroup = p.customizations.find((pc) => pc.group.kind === "fabric");
+        const selectedFabric = it.selections?.[fabricGroup?.group.name ?? "Fabric"] ?? "";
+        const perYard = fabricGroup?.group.choices.find((c) => c.label === selectedFabric)?.priceTk ?? 0;
+        const fabricCost = Math.round(perYard * (p.category?.fabricYards ?? 0));
+        unit = p.priceTk + p.tailoringCharge + fabricCost;
+      }
       return {
         productId: p.id,
         productName: p.name,

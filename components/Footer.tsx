@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SocialIcons from "./SocialIcons";
+import BrandLockup from "./BrandLockup";
 import { waLink } from "@/lib/whatsapp";
 import type { Settings } from "@/lib/data";
 
@@ -16,9 +17,13 @@ export default function Footer({
     <footer id="contact" className="ab-footer">
       <div className="ab-foot-grid">
         <div className="ab-foot-brand">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo} alt={settings.brandName || "Armoire Bespoke"} className="ab-foot-logo" />
-          <div className="ab-foot-tagline">{tagline}</div>
+          <BrandLockup
+            logo={logo}
+            brand={settings.brandName || "Armoire Bespoke"}
+            slogan={tagline}
+            logoClassName="ab-foot-logo"
+            sloganClassName="ab-foot-tagline"
+          />
           <p className="ab-foot-note">{settings.footerNote}</p>
           <SocialIcons facebook={settings.facebook} instagram={settings.instagram} className="ab-foot-social" />
         </div>

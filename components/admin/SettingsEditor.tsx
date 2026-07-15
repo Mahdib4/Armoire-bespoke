@@ -3,7 +3,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
 
-const FIELDS: { key: string; label: string; upload?: "image" | "video"; textarea?: boolean }[] = [
+const FIELDS: {
+  key: string;
+  label: string;
+  upload?: "image" | "video";
+  textarea?: boolean;
+  toggle?: boolean;
+}[] = [
   { key: "brandName", label: "Brand Name" },
   { key: "brandShort", label: "Brand Short (wordmark)" },
   { key: "slogan", label: "Slogan" },
@@ -12,6 +18,7 @@ const FIELDS: { key: string; label: string; upload?: "image" | "video"; textarea
   { key: "heroVideo", label: "Hero Video", upload: "video" },
   { key: "heroPoster", label: "Hero Poster", upload: "image" },
   { key: "midVideo", label: "Mid Video", upload: "video" },
+  { key: "priceChart", label: "Price Chart Image", upload: "image" },
   { key: "currency", label: "Currency Symbol" },
   { key: "contactEmail", label: "Contact Email" },
   { key: "contactPhone", label: "Contact Phone" },
@@ -58,7 +65,12 @@ export default function SettingsEditor({ initial }: { initial: Record<string, st
         {FIELDS.map((f) => (
           <div className={`adm-field ${f.textarea ? "wide" : ""}`} key={f.key}>
             <label>{f.label}</label>
-            {f.textarea ? (
+            {f.toggle ? (
+              <div className="adm-toggle">
+                <button type="button" className={vals[f.key] !== "0" ? "on" : ""} onClick={() => set(f.key, "1")}>Visible</button>
+                <button type="button" className={vals[f.key] === "0" ? "on" : ""} onClick={() => set(f.key, "0")}>Hidden</button>
+              </div>
+            ) : f.textarea ? (
               <textarea rows={2} value={vals[f.key]} onChange={(e) => set(f.key, e.target.value)} />
             ) : (
               <div style={{ display: "flex", gap: "0.5rem" }}>

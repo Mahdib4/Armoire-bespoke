@@ -2,6 +2,7 @@ import Hero from "@/components/Hero";
 import QuoteBand from "@/components/QuoteBand";
 import CategorySection from "@/components/CategorySection";
 import { Storytelling, Lookbook, Fabric } from "@/components/StorySections";
+import PriceChart from "@/components/PriceChart";
 import AppointmentSection from "@/components/AppointmentSection";
 import {
   getSettings,
@@ -61,6 +62,8 @@ export default async function HomePage() {
           )}
         </div>
       ))}
+
+      {settings.priceChart && <PriceChart src={settings.priceChart} />}
 
       <AppointmentSection
         message={

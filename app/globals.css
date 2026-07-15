@@ -386,7 +386,8 @@ html.lenis body {
 .ab-brand {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  align-items: flex-start;
+  gap: 0.3rem;
   text-decoration: none;
   line-height: 1;
 }
@@ -400,11 +401,13 @@ html.lenis body {
   height: clamp(40px, 4vw, 52px);
 }
 .ab-slogan {
+  display: block;
+  white-space: nowrap;
   font-size: 0.72rem;
-  letter-spacing: 0.44em;
+  letter-spacing: 0.44em; /* fallback before JS fits it to the logo width */
   text-transform: uppercase;
   color: #ffffff;
-  padding-left: 4px;
+  overflow: hidden;
 }
 .ab-header.scrolled .ab-slogan {
   opacity: 0.85;
@@ -530,9 +533,17 @@ html.lenis body {
   width: auto;
   object-fit: contain;
 }
+.ab-foot-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
 .ab-foot-tagline {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
   font-size: 0.62rem;
-  letter-spacing: 0.34em;
+  letter-spacing: 0.34em; /* fallback before JS fits it to the logo width */
   text-transform: uppercase;
   color: #ffffff;
   margin-top: 0.7rem;
@@ -1219,6 +1230,16 @@ html.lenis body {
   color: var(--ivory);
 }
 .ppanel-charge-row .tk { color: var(--gold); }
+.ppanel-yards {
+  font-size: 0.74rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  margin: 0.15rem 0 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ppanel-yards span { font-size: 0.55rem; opacity: 0.8; }
 .ppanel-note {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -1395,6 +1416,38 @@ html.lenis body {
   cursor: pointer;
 }
 .pdp-related { margin-top: 5rem; }
+
+/* Cinematic tailoring-charges (price chart) section */
+.price-sec {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding: clamp(4rem, 9vw, 8rem) 1.25rem;
+  background: linear-gradient(#0a0a0a, #060606);
+}
+.price-dust { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.price-sec .sec-head { position: relative; z-index: 2; }
+.pc-word { display: inline-block; }
+.pc-title .pc-word { margin: 0 0.28em; }
+.pc-media {
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
+  margin: 2.6rem auto 0;
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.6);
+  will-change: transform, clip-path, filter;
+}
+.pc-img { width: 100%; height: auto; display: block; }
+.pc-glow {
+  position: absolute;
+  inset: -25%;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 42%, rgba(201, 168, 76, 0.28), transparent 62%);
+  filter: blur(22px);
+  pointer-events: none;
+}
+
 
 /* ===================== CATEGORY LISTING ===================== */
 .clist { padding-bottom: 4rem; }

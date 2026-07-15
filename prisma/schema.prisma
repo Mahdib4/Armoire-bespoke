@@ -38,6 +38,7 @@ model Category {
   bannerType        String             @default("image") // image | video
   bannerUrl         String?
   posterUrl         String?
+  fabricYards       Float              @default(0) // yards of cloth a tailor-made piece needs
   products          Product[]
   measurementFields MeasurementField[]
   createdAt         DateTime           @default(now())
@@ -94,6 +95,7 @@ model CustomizationChoice {
   groupId String
   group   CustomizationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   label   String
+  priceTk Int                @default(0) // per-yard price (fabric choices); 0 = no surcharge
   order   Int                @default(0)
 }
 

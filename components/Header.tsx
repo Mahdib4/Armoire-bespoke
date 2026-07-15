@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { animate, stagger } from "animejs";
 import { useCart } from "@/lib/cart";
 import SocialIcons from "./SocialIcons";
+import BrandLockup from "./BrandLockup";
 
 export type NavItem = { label: string; href: string };
 
@@ -60,9 +61,7 @@ export default function Header({
         className={`ab-header ${scrolled ? "scrolled" : ""} ${open ? "over" : ""}`}
       >
         <Link href="/" className="ab-brand" aria-label={brand}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo} alt={brand} className="ab-logo" />
-          <span className="ab-slogan">{slogan}</span>
+          <BrandLockup logo={logo} brand={brand} slogan={slogan} logoClassName="ab-logo" sloganClassName="ab-slogan" />
         </Link>
 
         <div className="ab-actions">
