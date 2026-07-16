@@ -57,12 +57,16 @@ export default function ProductPanel({ product }: { product: ProductView }) {
   const cuffStyle = product.customizations.find((c) => c.kind === "cuff-style");
   const showSleeveCount = !!cuffStyle && sel[cuffStyle.name] === "Sleeve Buttons";
 
-  // Blazer fabric pricing: the selected fabric drives a per-yard + 4-yard price
-  // readout (a suit takes ~4 yards). Falls back to the "From" row if unpriced.
+  // Fabric needed per garment (yards). Drives the fabric-cost readout.
+  const YARDS: Record<string, number> = { blazer: 2.5, jacket: 2.5, trouser: 1.5, kurta: 2.75, shirt: 2.5 };
+  const yardsNeeded = YARDS[product.categorySlug] ?? 0;
+
+  // Fabric pricing: the selected fabric drives a per-yard + (yards-needed) total
+  // readout. Falls back to the "From" row if the fabric or yardage is unpriced.
   const fabricGroup = product.customizations.find((c) => c.kind === "fabric");
   const selectedFabric = fabricGroup ? sel[fabricGroup.name] : "";
   const fabricYard = product.fabricPrices[selectedFabric] ?? 0;
-  const showFabricPrice = isTailor && product.categorySlug === "blazer" && fabricYard > 0;
+  const showFabricPrice = isTailor && yardsNeeded > 0 && fabricYard > 0;
 
   // Ready-Made kurtas & shirts show their size chart inline, above Add to Cart.
   const inlineChart =
@@ -120,17 +124,21 @@ export default function ProductPanel({ product }: { product: ProductView }) {
           </div>
           {showFabricPrice ? (
             <>
-              {/* Fabric pricing follows the selected fabric (per yard + 4-yard total). */}
+              {/* Fabric pricing follows the selected fabric × yards this garment needs. */}
               <div className="ppanel-charge-row">
                 <span>Fabric price (per yard)</span>
                 <span className="tk">{formatTk(fabricYard, product.currency)}</span>
               </div>
+              <div className="ppanel-charge-row">
+                <span>Fabric needed</span>
+                <span>{yardsNeeded} yards</span>
+              </div>
               <div className="ppanel-charge-row total">
-                <span>Fabric for 4 yards</span>
-                <span className="tk">{formatTk(fabricYard * 4, product.currency)}</span>
+                <span>Fabric for {yardsNeeded} yards</span>
+                <span className="tk">{formatTk(Math.round(fabricYard * yardsNeeded), product.currency)}</span>
               </div>
               <p className="ppanel-note">
-                A suit usually takes 4 yards to make. {product.tailoringNote}
+                A {product.categoryName.toLowerCase()} needs about {yardsNeeded} yards of cloth. {product.tailoringNote}
               </p>
             </>
           ) : (

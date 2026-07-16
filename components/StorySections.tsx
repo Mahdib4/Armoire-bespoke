@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import GoldDust from "./GoldDust";
-import { formatTk } from "@/lib/format";
+import FabricSwatches from "./FabricSwatches";
 
 type Section = { title?: string | null; subtitle?: string | null; body?: string | null; config?: string | null };
 
@@ -103,25 +103,7 @@ export function Fabric({
         <div className="rule" />
       </div>
       <p className="fabric-body rv rv-2">{section?.body}</p>
-      <div className="fabric-swatches">
-        {swatches.map((s, i) => (
-          <div key={s.name + i} className={`swatch rv sw-${i % 6} ${s.image ? "has-img" : ""}`}>
-            {s.image && (
-              <Image
-                src={s.image}
-                alt={s.name}
-                fill
-                sizes="(max-width:640px) 45vw, 200px"
-                className="swatch-img"
-              />
-            )}
-            <span className="swatch-cap">
-              <span className="swatch-name">{s.name}</span>
-              {s.price > 0 && <span className="swatch-price tk">{formatTk(s.price)} / yd</span>}
-            </span>
-          </div>
-        ))}
-      </div>
+      <FabricSwatches swatches={swatches} />
     </section>
   );
 }

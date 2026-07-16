@@ -39,7 +39,7 @@ export default function CategorySection({
           <span className="eyebrow rv">Collection {String(index + 1).padStart(2, "0")}</span>
           <h2 className="cat-banner-title rv rv-1">{category.name}</h2>
           <p className="cat-banner-tag rv rv-2">{category.tagline}</p>
-          <span className="btn btn-ghost rv rv-3 cat-banner-cta">Explore {category.name}</span>
+          <span className="btn btn-ghost rv rv-3 cat-banner-cta">Explore</span>
         </div>
       </Link>
     </section>
