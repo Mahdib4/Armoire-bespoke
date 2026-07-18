@@ -80,6 +80,7 @@ export default function InspirationForm() {
           <Uploader
             accept="image/*"
             endpoint="/api/inspiration/upload"
+            direct={false}
             label="+ Add Photo"
             onUploaded={(url) => setPhotos((p) => [...p, url])}
           />
