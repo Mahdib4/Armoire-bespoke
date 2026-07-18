@@ -41,10 +41,10 @@ export default function MediaManager({ media }: { media: Media[] }) {
               <div key={m.id} style={{ border: "1px solid var(--border)", background: "#0d0d0d" }}>
                 <div style={{ aspectRatio: "1 / 1", background: "#151515", overflow: "hidden" }}>
                   {m.type === "video" ? (
-                    <video src={m.url} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <video src={m.url} muted preload="metadata" playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={m.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={m.url} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   )}
                 </div>
                 <div style={{ padding: "0.4rem", display: "flex", gap: "0.3rem", justifyContent: "space-between" }}>

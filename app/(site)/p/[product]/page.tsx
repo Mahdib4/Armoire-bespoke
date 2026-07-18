@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import ProductGallery from "@/components/ProductGallery";
 import ProductPanel, { type ProductView } from "@/components/ProductPanel";
 import ProductRail from "@/components/ProductRail";
-import { getProductBySlug, getSettings, getAllProductSlugs, getFabricPrices } from "@/lib/data";
+import CustomerWords from "@/components/CustomerWords";
+import { getProductBySlug, getSettings, getAllProductSlugs, getFabricPrices, getReviews } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
@@ -38,10 +39,11 @@ export default async function ProductPage({
   params: Promise<{ product: string }>;
 }) {
   const { product: slug } = await params;
-  const [product, settings, fabricPrices] = await Promise.all([
+  const [product, settings, fabricPrices, reviews] = await Promise.all([
     getProductBySlug(slug),
     getSettings(),
     getFabricPrices(),
+    getReviews(),
   ]);
   if (!product || !product.active) notFound();
 
@@ -148,6 +150,9 @@ export default async function ProductPage({
           />
         </section>
       )}
+
+      {/* Customer's Words — shown on every product page, just above the footer. */}
+      <CustomerWords reviews={reviews} show={settings.reviewsShow !== "0"} />
     </div>
   );
 }

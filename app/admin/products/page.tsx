@@ -43,7 +43,7 @@ export default async function AdminProducts() {
                 <td>
                   {p.images[0] ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={p.images[0].url} alt="" className="adm-thumb" />
+                    <img src={p.images[0].url} alt="" className="adm-thumb" loading="lazy" decoding="async" />
                   ) : (
                     <div className="adm-thumb" />
                   )}

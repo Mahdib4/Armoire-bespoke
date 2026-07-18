@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/categories", label: "Categories & Banners" },
   { href: "/admin/sections", label: "Sections" },
+  { href: "/admin/reviews", label: "Customer's Words" },
   { href: "/admin/quotes", label: "Quotes" },
   { href: "/admin/settings", label: "Site Settings" },
   { href: "/admin/orders", label: "Orders", badgeKey: "orders" },

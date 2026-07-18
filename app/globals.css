@@ -2223,3 +2223,153 @@ html.lenis body {
   .ab-nav .mlink, .ab-overlay-foot { opacity: 1 !important; }
   * { scroll-behavior: auto !important; }
 }
+
+/* ===== Customer's Words (testimonials) ===== */
+.cw {
+  padding: clamp(3.25rem, 6vw, 5.5rem) clamp(1.25rem, 5vw, 5rem);
+  max-width: 1220px;
+  margin: 0 auto;
+}
+.cw-sub {
+  text-align: center;
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  margin: -1.4rem 0 clamp(2rem, 4vw, 3rem);
+}
+.cw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(1rem, 2.4vw, 1.8rem);
+}
+.cw-card {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: clamp(1.4rem, 2.6vw, 2rem);
+  background: var(--charcoal);
+  border: 1px solid rgba(201, 168, 76, 0.22);
+  border-radius: 2px;
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.cw-in .cw-card {
+  opacity: 1;
+  transform: none;
+}
+.cw-stars {
+  display: flex;
+  gap: 2px;
+  font-size: 0.95rem;
+  color: rgba(245, 240, 232, 0.25);
+  letter-spacing: 1px;
+}
+.cw-stars .on {
+  color: var(--gold);
+}
+.cw-text {
+  margin: 0;
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  line-height: 1.6;
+  color: var(--ivory);
+  quotes: "\201C" "\201D";
+}
+.cw-text::before {
+  content: open-quote;
+  color: var(--gold-dim);
+  margin-right: 0.15em;
+}
+.cw-text::after {
+  content: close-quote;
+  color: var(--gold-dim);
+  margin-left: 0.1em;
+}
+.cw-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+.cw-photo {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--deep);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.cw-photo:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+.cw-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cw-by {
+  margin-top: auto;
+  padding-top: 0.35rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.cw-name {
+  font-family: var(--font-cinzel), serif;
+  letter-spacing: 0.1em;
+  font-size: 0.82rem;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.cw-loc {
+  font-size: 0.78rem;
+  color: var(--text-muted, rgba(245, 240, 232, 0.55));
+}
+.cw-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4vw;
+  cursor: zoom-out;
+  animation: cwFade 0.2s ease;
+}
+@keyframes cwFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.cw-lightbox img {
+  max-width: 92vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  cursor: default;
+}
+.cw-lightbox-close {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.6rem;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--ivory);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cw-card { opacity: 1 !important; transform: none !important; }
+  .cw-lightbox { animation: none; }
+}

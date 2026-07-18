@@ -164,6 +164,44 @@ export async function getLookbook() {
   return looks;
 }
 
+export type ReviewView = {
+  id: string;
+  author: string;
+  location: string;
+  rating: number;
+  text: string;
+  photos: string[];
+};
+
+/** Active customer testimonials for the "Customer's Words" section.
+ *  Defensive: returns [] if the Review table doesn't exist yet (e.g. prod DB
+ *  not migrated), so pages never crash at prerender. */
+export const getReviews = cache(async (): Promise<ReviewView[]> => {
+  try {
+    const rows = await prisma.review.findMany({
+      where: { active: true },
+      orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      author: r.author,
+      location: r.location || "",
+      rating: r.rating,
+      text: r.text,
+      photos: (() => {
+        try {
+          const arr = JSON.parse(r.photos || "[]");
+          return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
+        } catch {
+          return [];
+        }
+      })(),
+    }));
+  } catch {
+    return [];
+  }
+});
+
 export type HomeCategory = Awaited<ReturnType<typeof getHomeCategories>>[number];
 export type ProductFull = NonNullable<Awaited<ReturnType<typeof getProductBySlug>>>;
 export type CategoryFull = NonNullable<Awaited<ReturnType<typeof getCategoryBySlug>>>;

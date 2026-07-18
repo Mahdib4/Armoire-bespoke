@@ -4,6 +4,7 @@ import CategorySection from "@/components/CategorySection";
 import { Storytelling, Lookbook, Fabric } from "@/components/StorySections";
 import PriceChart from "@/components/PriceChart";
 import InspirationBand from "@/components/InspirationBand";
+import CustomerWords from "@/components/CustomerWords";
 import AppointmentSection from "@/components/AppointmentSection";
 import {
   getSettings,
@@ -11,17 +12,19 @@ import {
   getQuotes,
   getSections,
   getLookbook,
+  getReviews,
 } from "@/lib/data";
 
 export const revalidate = 120;
 
 export default async function HomePage() {
-  const [settings, categories, quotes, sections, looks] = await Promise.all([
+  const [settings, categories, quotes, sections, looks, reviews] = await Promise.all([
     getSettings(),
     getHomeCategories(),
     getQuotes(),
     getSections(),
     getLookbook(),
+    getReviews(),
   ]);
 
   const storyImage =
@@ -67,6 +70,8 @@ export default async function HomePage() {
       <PriceChart src={settings.priceChart || "/media/price-chart.jpeg"} />
 
       <InspirationBand />
+
+      <CustomerWords reviews={reviews} show={settings.reviewsShow !== "0"} />
 
       <AppointmentSection
         message={

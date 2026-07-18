@@ -145,6 +145,20 @@ model Media {
   createdAt DateTime @default(now())
 }
 
+/// Customer testimonial shown in the "Customer's Words" section (homepage + product pages).
+model Review {
+  id        String   @id @default(cuid())
+  author    String // customer name
+  location  String? // optional, e.g. "Dhaka"
+  rating    Int      @default(5) // 1–5
+  text      String // the review / experience
+  photos    String? // JSON array of image URLs
+  featured  Boolean  @default(false)
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
 model Order {
   id           String      @id @default(cuid())
   publicId     String      @unique
