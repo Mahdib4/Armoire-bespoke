@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 
 const IMAGE_TARGET = 3_600_000; // bytes — target size when compressing for the server path
 const MAX_DIM = 2400; // px — longest edge when compressing for the server path
+const SERVER_LIMIT = 4.3 * 1024 * 1024; // bytes — max that can go through the server route (Vercel body cap)
 
 type SignResponse = {
   uploadUrl?: string;
@@ -152,7 +153,17 @@ export default function Uploader({
     if (!sign?.uploadUrl || !sign?.publicUrl) throw new Error("Upload could not be prepared.");
 
     const kind = sign.type || (contentType.startsWith("video/") ? "video" : "image");
-    await putWithProgress(sign.uploadUrl, file, sign.contentType || contentType, setPct);
+    try {
+      await putWithProgress(sign.uploadUrl, file, sign.contentType || contentType, setPct);
+    } catch (err) {
+      // The direct upload failed — most often because the R2 bucket has no CORS
+      // policy for this site. Small files can still go through the server route,
+      // so fall back to it; large videos genuinely need CORS configured.
+      if (file.size <= SERVER_LIMIT) return uploadViaServer(file);
+      throw err instanceof Error
+        ? new Error(err.message + " (Large videos need the R2 CORS policy — see setup notes.)")
+        : new Error("Upload failed.");
+    }
 
     // Record it in the media library (non-fatal if it fails).
     fetch("/api/admin/upload/complete", {

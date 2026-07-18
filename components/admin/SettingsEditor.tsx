@@ -43,6 +43,25 @@ export default function SettingsEditor({ initial }: { initial: Record<string, st
   const [msg, setMsg] = useState<string | null>(null);
   const set = (k: string, v: string) => setVals((p) => ({ ...p, [k]: v }));
 
+  // Uploads persist immediately so a new hero video / logo / poster goes live
+  // right away — the separate "Save Settings" step was easy to forget.
+  const onUpload = async (key: string, url: string) => {
+    set(key, url);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: [{ key, value: url }] }),
+      });
+      if (!res.ok) throw new Error();
+      setMsg("Uploaded & saved — it is now live on the site.");
+      router.refresh();
+    } catch {
+      setMsg("Uploaded — click “Save Settings” below to keep it.");
+    }
+  };
+
   const save = async () => {
     setBusy(true);
     setMsg(null);
@@ -79,7 +98,7 @@ export default function SettingsEditor({ initial }: { initial: Record<string, st
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <input value={vals[f.key]} onChange={(e) => set(f.key, e.target.value)} />
                 {f.upload && (
-                  <Uploader accept={`${f.upload}/*`} label="↑" onUploaded={(url) => set(f.key, url)} />
+                  <Uploader accept={`${f.upload}/*`} label="↑" onUploaded={(url) => onUpload(f.key, url)} />
                 )}
               </div>
             )}
