@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import PushToggle from "./PushToggle";
+import BrandLockup from "../BrandLockup";
 
 const NAV = [
   { href: "/admin", label: "Overview", exact: true },
@@ -19,10 +20,16 @@ export default function AdminSidebar({
   email,
   unread = 0,
   pendingOrders = 0,
+  logo = "/media/brand/logo-dark.png",
+  slogan = "Tailored to Define You",
+  brand = "Armoire Bespoke",
 }: {
   email: string;
   unread?: number;
   pendingOrders?: number;
+  logo?: string;
+  slogan?: string;
+  brand?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -38,10 +45,10 @@ export default function AdminSidebar({
 
   return (
     <aside className="adm-side">
-      <div className="adm-brand">
-        <span className="font-display">ARMOIRE</span>
+      <Link href="/admin" className="adm-brand">
+        <BrandLockup logo={logo} brand={brand} slogan={slogan} logoClassName="adm-brand-logo" sloganClassName="adm-brand-tagline" />
         <em>Atelier Admin</em>
-      </div>
+      </Link>
       <nav className="adm-nav">
         {NAV.map((n) => {
           const active = n.exact ? pathname === n.href : pathname.startsWith(n.href);

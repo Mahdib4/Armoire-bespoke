@@ -12,6 +12,7 @@ export type CategoryForm = {
   bannerType: "image" | "video";
   bannerUrl: string;
   posterUrl: string;
+  sizeChartUrl: string;
   order: number;
   active: boolean;
   measurements: Measurement[];
@@ -38,6 +39,7 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
           bannerType: f.bannerType,
           bannerUrl: f.bannerUrl || null,
           posterUrl: f.posterUrl || null,
+          sizeChartUrl: f.sizeChartUrl || null,
           order: Number(f.order),
           active: f.active,
           measurements: f.measurements.filter((m) => m.label.trim()),
@@ -102,6 +104,17 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
             </div>
             <Uploader accept="image/*" label="Upload" onUploaded={(url) => upd("posterUrl", url)} />
           </div>
+        )}
+        <div className="adm-field wide" style={{ flexDirection: "row", alignItems: "flex-end", gap: "0.6rem" }}>
+          <div style={{ flex: 1 }}>
+            <label>Size Chart (shown on Ready-Made products)</label>
+            <input value={f.sizeChartUrl} onChange={(e) => upd("sizeChartUrl", e.target.value)} />
+          </div>
+          <Uploader accept="image/*" label="Upload" onUploaded={(url) => upd("sizeChartUrl", url)} />
+        </div>
+        {f.sizeChartUrl && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={f.sizeChartUrl} alt="Size chart" style={{ maxWidth: 220, border: "1px solid var(--border)" }} />
         )}
       </div>
 

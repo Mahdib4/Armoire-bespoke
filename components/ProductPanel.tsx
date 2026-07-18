@@ -306,17 +306,6 @@ export default function ProductPanel({ product }: { product: ProductView }) {
         </div>
       )}
 
-      {/* Ready-Made kurta & shirt: size chart shown inline, just above Add to Cart. */}
-      {inlineChart && (
-        <div className="ppanel-block ppanel-chart">
-          <div className="ppanel-label">Size Chart</div>
-          <button type="button" className="ppanel-chart-frame" onClick={() => setChartOpen(true)} aria-label="Enlarge size chart">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={inlineChart} alt={`${product.categoryName} size chart`} />
-          </button>
-        </div>
-      )}
-
       {/* Quantity + add */}
       <div className="ppanel-buy">
         <div className="qty">

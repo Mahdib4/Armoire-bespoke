@@ -17,9 +17,11 @@ export default async function SiteLayout({
 }) {
   const [settings, categories] = await Promise.all([getSettings(), getNavCategories()]);
 
-  // Menu shows only the product collections (Blazer, Jacket, Shirt, Trouser, Kurta),
-  // in their configured order — no narrative links.
+  // Menu: the product collections, then Fabrics (after Kurta) and Share Your Inspiration.
   const items: NavItem[] = categories.map((c) => ({ label: c.name, href: `/c/${c.slug}` }));
+  const kurtaIdx = categories.findIndex((c) => c.slug === "kurta");
+  items.splice(kurtaIdx >= 0 ? kurtaIdx + 1 : items.length, 0, { label: "Fabrics", href: "/fabrics" });
+  items.push({ label: "Share Your Inspiration", href: "/inspiration" });
 
   return (
     <CartProvider>

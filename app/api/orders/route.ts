@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { sendAdminPush } from "@/lib/push";
+import { getFabricPrices } from "@/lib/data";
 import { formatTk, orderPublicId } from "@/lib/format";
 
 export const runtime = "nodejs";
@@ -13,6 +14,14 @@ const ItemSchema = z.object({
   size: z.string().optional(),
   selections: z.record(z.string(), z.string()).optional(),
   measurements: z.record(z.string(), z.string()).optional(),
+  fabric: z
+    .object({
+      name: z.string().min(1).max(160),
+      yards: z.number().min(0.25).max(200),
+      colorCode: z.string().max(120).optional(),
+      note: z.string().max(600).optional(),
+    })
+    .optional(),
 });
 
 const OrderSchema = z.object({
@@ -44,12 +53,31 @@ export async function POST(req: Request) {
 
   // Re-price from DB (never trust client prices).
   const products = await prisma.product.findMany({
-    where: { id: { in: items.map((i) => i.productId) }, active: true },
+    where: { id: { in: items.filter((i) => !i.fabric).map((i) => i.productId) }, active: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
+  // Fabric-by-the-yard prices come from the Fabric Collection section.
+  const fabricPrices = items.some((i) => i.fabric) ? await getFabricPrices() : {};
 
   const lineData = items
     .map((it) => {
+      // Fabric line: price = price/yard × yards (validated server-side).
+      if (it.fabric) {
+        const perYard = fabricPrices[it.fabric.name] ?? 0;
+        if (perYard <= 0) return null;
+        const yards = it.fabric.yards;
+        const selections: Record<string, string> = { Yards: `${yards}` };
+        if (it.fabric.colorCode) selections["Colour code"] = it.fabric.colorCode;
+        return {
+          productId: null,
+          productName: `${it.fabric.name} — fabric (${yards} yd)`,
+          type: "FABRIC",
+          priceTk: Math.round(perYard * yards),
+          qty: it.qty,
+          selections: JSON.stringify(selections),
+          measurements: it.fabric.note ? JSON.stringify({ Note: it.fabric.note }) : null,
+        };
+      }
       const p = byId.get(it.productId);
       if (!p) return null;
       // Tailor Made line price includes the tailoring charge.

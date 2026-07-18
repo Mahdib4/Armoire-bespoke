@@ -28,6 +28,7 @@ export default async function AdminCategories() {
             bannerType: c.bannerType === "video" ? "video" : "image",
             bannerUrl: c.bannerUrl || "",
             posterUrl: c.posterUrl || "",
+            sizeChartUrl: c.sizeChartUrl || "",
             order: c.order,
             active: c.active,
             measurements: c.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),

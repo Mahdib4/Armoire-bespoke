@@ -47,6 +47,12 @@ export default async function ProductPage({
 
   const currency = settings.currency || "Tk";
   const isReady = product.type === "READYMADE";
+  // Ready-Made only: a size chart shown full-width below the gallery. Prefer the
+  // category's chart (admin-uploaded), then the product's, then a bundled fallback.
+  const knownChart = ["shirt", "kurta"].includes(product.category.slug)
+    ? `/media/sizecharts/${product.category.slug}.jpg`
+    : null;
+  const sizeChart = isReady ? product.category.sizeChartUrl || product.sizeChartUrl || knownChart : null;
   // Featured image first, then the rest in order.
   const gallery = [...product.images].sort(
     (a, b) => Number(b.featured) - Number(a.featured) || a.order - b.order
@@ -111,6 +117,18 @@ export default async function ProductPage({
         />
         <ProductPanel product={view} />
       </div>
+
+      {/* Ready-Made: size chart shown automatically, centred (full width). */}
+      {sizeChart && (
+        <section className="pdp-sizechart">
+          <div className="sec-head">
+            <div className="sec-title">Size Chart</div>
+            <div className="rule" />
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={sizeChart} alt={`${product.category.name} size chart`} className="pdp-sizechart-img" />
+        </section>
+      )}
 
       {related.length > 0 && (
         <section className="pdp-related">

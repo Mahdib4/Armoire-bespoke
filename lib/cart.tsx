@@ -6,13 +6,17 @@ export type CartItem = {
   productId: string;
   slug: string;
   name: string;
-  type: "CUSTOM" | "READYMADE";
+  type: "CUSTOM" | "READYMADE" | "FABRIC";
   priceTk: number;
   qty: number;
   image: string;
   size?: string;
   selections?: Record<string, string>;
   measurements?: Record<string, string>;
+  // Fabric-by-the-yard only
+  yards?: number;
+  colorCode?: string;
+  note?: string;
 };
 
 type CartContextValue = {
@@ -47,8 +51,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const add = useCallback((item: Omit<CartItem, "key">) => {
     const key =
-      item.type === "CUSTOM"
-        ? `${item.productId}-${Date.now()}` // each bespoke config is unique
+      item.type === "CUSTOM" || item.type === "FABRIC"
+        ? `${item.productId}-${Date.now()}` // each bespoke config / fabric length is unique
         : `${item.productId}-${item.size ?? "std"}`;
     setItems((prev) => {
       const existing = prev.find((p) => p.key === key);

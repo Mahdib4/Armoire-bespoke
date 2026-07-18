@@ -12,6 +12,7 @@ const Schema = z.object({
   bannerType: z.enum(["image", "video"]).optional(),
   bannerUrl: z.string().max(500).nullable().optional(),
   posterUrl: z.string().max(500).nullable().optional(),
+  sizeChartUrl: z.string().max(500).nullable().optional(),
   order: z.number().int().optional(),
   active: z.boolean().optional(),
   measurements: z
@@ -35,6 +36,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         bannerType: d.bannerType,
         bannerUrl: d.bannerUrl,
         posterUrl: d.posterUrl,
+        sizeChartUrl: d.sizeChartUrl,
         order: d.order,
         active: d.active,
       },

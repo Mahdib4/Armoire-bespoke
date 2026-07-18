@@ -4,10 +4,12 @@ import { useRef, useState } from "react";
 export default function Uploader({
   accept = "image/*",
   label = "Upload",
+  endpoint = "/api/admin/upload",
   onUploaded,
 }: {
   accept?: string;
   label?: string;
+  endpoint?: string;
   onUploaded: (url: string, type: string) => void;
 }) {
   const ref = useRef<HTMLInputElement>(null);
@@ -20,7 +22,7 @@ export default function Uploader({
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const res = await fetch(endpoint, { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Upload failed");
       onUploaded(data.url, data.type);

@@ -3,6 +3,7 @@ import QuoteBand from "@/components/QuoteBand";
 import CategorySection from "@/components/CategorySection";
 import { Storytelling, Lookbook, Fabric } from "@/components/StorySections";
 import PriceChart from "@/components/PriceChart";
+import InspirationBand from "@/components/InspirationBand";
 import AppointmentSection from "@/components/AppointmentSection";
 import {
   getSettings,
@@ -64,6 +65,8 @@ export default async function HomePage() {
       ))}
 
       <PriceChart src={settings.priceChart || "/media/price-chart.jpeg"} />
+
+      <InspirationBand />
 
       <AppointmentSection
         message={

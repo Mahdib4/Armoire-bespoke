@@ -45,6 +45,10 @@ export default function CheckoutPage() {
             size: i.size,
             selections: i.selections,
             measurements: i.measurements,
+            fabric:
+              i.type === "FABRIC"
+                ? { name: i.name, yards: i.yards, colorCode: i.colorCode, note: i.note }
+                : undefined,
           })),
         }),
       });
@@ -141,7 +145,13 @@ export default function CheckoutPage() {
               </div>
               <div className="cosum-info">
                 <span>{it.name}</span>
-                <small>{it.type === "CUSTOM" ? "Made-to-Measure" : `Ready-Made · ${it.size ?? ""}`}</small>
+                <small>
+                  {it.type === "CUSTOM"
+                    ? "Made-to-Measure"
+                    : it.type === "FABRIC"
+                      ? `Fabric · ${it.yards ?? ""} yd`
+                      : `Ready-Made · ${it.size ?? ""}`}
+                </small>
               </div>
               <span className="tk">{formatTk(it.priceTk * it.qty)}</span>
             </div>

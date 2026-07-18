@@ -285,6 +285,7 @@ async function main() {
     instagram: "https://www.instagram.com/armoirebespoke",
     footerNote: "Where master craft meets timeless elegance. Every stitch — a signature of devotion.",
     priceChart: "/media/price-chart.jpeg",
+    inspirationHero: "/media/videos/mid.mp4",
   };
   for (const [key, value] of Object.entries(settings)) {
     await prisma.siteSetting.create({ data: { key, value } });

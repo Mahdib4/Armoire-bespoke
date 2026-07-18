@@ -59,7 +59,7 @@ function lineRows(items: OrderLine[]): string {
         <td style="padding:14px 0;border-bottom:1px solid #262626;color:${IVORY};font-family:Georgia,serif">
           <div style="font-size:15px">${it.productName} <span style="color:#8f8a80;font-size:12px">× ${it.qty}</span></div>
           <div style="color:${GOLD};font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-top:3px">${
-            it.type === "CUSTOM" ? "Made-to-Measure" : "Ready-Made"
+            it.type === "CUSTOM" ? "Made-to-Measure" : it.type === "FABRIC" ? "Fabric (by the yard)" : "Ready-Made"
           }</div>
           ${opts ? `<div style="color:#b8b2a6;font-size:12px;margin-top:6px">${opts}</div>` : ""}
           ${meas ? `<div style="color:#7d7870;font-size:11px;margin-top:4px">Measurements — ${meas}</div>` : ""}
@@ -115,21 +115,49 @@ export type EnquiryEmailData = {
   message?: string | null;
   type: string;
   appointment?: string | null;
+  photos?: string[]; // absolute or site-relative image URLs (e.g. inspiration uploads)
 };
 
-/** Notifies the owner of a new customer enquiry / appointment request. */
+function absUrl(u: string): string {
+  if (/^https?:\/\//.test(u)) return u;
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+  return `${base}${u.startsWith("/") ? "" : "/"}${u}`;
+}
+
+/** Notifies the owner of a new customer enquiry / appointment / inspiration request. */
 export async function sendEnquiryEmail(e: EnquiryEmailData): Promise<{ sent: boolean }> {
   const owner = process.env.OWNER_EMAIL;
   const t = transport();
   const from = process.env.MAIL_FROM || "Armoire Bespoke <no-reply@armoirebespoke.com>";
-  const label = e.type === "appointment" ? "Appointment request" : "New enquiry";
+  const label =
+    e.type === "appointment"
+      ? "Appointment request"
+      : e.type === "inspiration"
+        ? "Inspiration request"
+        : "New enquiry";
+  const photos = e.photos ?? [];
 
   if (!t || !owner) {
     console.log(`\n[email:preview] ${label} from ${e.name} <${e.phone}${e.email ? " / " + e.email : ""}>`);
     if (e.appointment) console.log(`[email:preview] preference: ${e.appointment}`);
     if (e.message) console.log(`[email:preview] message: ${e.message}`);
+    if (photos.length) console.log(`[email:preview] photos: ${photos.map(absUrl).join(", ")}`);
     return { sent: false };
   }
+
+  const photosHtml = photos.length
+    ? `<div style="margin-top:16px;border-top:1px solid #242424;padding-top:16px">
+         <div style="color:#8f8a80;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Attached inspiration (${photos.length})</div>
+         ${photos
+           .map(
+             (p) =>
+               `<a href="${absUrl(p)}" style="display:inline-block;margin:0 6px 6px 0"><img src="${absUrl(
+                 p
+               )}" width="90" height="110" style="object-fit:cover;border:1px solid #333"/></a>`
+           )
+           .join("")}
+       </div>`
+    : "";
 
   const html = `
   <div style="background:${BG};padding:28px 0;font-family:Arial,sans-serif">
@@ -142,7 +170,8 @@ export async function sendEnquiryEmail(e: EnquiryEmailData): Promise<{ sent: boo
         ${e.appointment ? `<tr><td style="color:#8f8a80">Preference</td><td style="color:${GOLD}">${e.appointment}</td></tr>` : ""}
         ${e.subject ? `<tr><td style="color:#8f8a80">Subject</td><td>${e.subject}</td></tr>` : ""}
       </table>
-      ${e.message ? `<p style="color:${IVORY};font-size:14px;line-height:1.7;margin-top:16px;border-top:1px solid #242424;padding-top:16px">${e.message}</p>` : ""}
+      ${e.message ? `<p style="color:${IVORY};font-size:14px;line-height:1.7;margin-top:16px;border-top:1px solid #242424;padding-top:16px;white-space:pre-wrap">${e.message}</p>` : ""}
+      ${photosHtml}
     </div>
   </div>`;
 
@@ -152,6 +181,7 @@ export async function sendEnquiryEmail(e: EnquiryEmailData): Promise<{ sent: boo
     replyTo: e.email || undefined,
     subject: `${label} — ${e.name} (${e.phone})`,
     html,
+    attachments: photos.map((p) => ({ path: absUrl(p) })),
   });
   return { sent: true };
 }

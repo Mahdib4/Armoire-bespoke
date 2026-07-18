@@ -28,18 +28,24 @@ export default function CartPage() {
 
       <div className="cart-grid">
         <div className="cart-items">
-          {items.map((it) => (
+          {items.map((it) => {
+            const href = it.type === "FABRIC" ? `/fabric/${it.slug.replace(/^fabric:/, "")}` : `/p/${it.slug}`;
+            return (
             <div className="cart-item" key={it.key}>
-              <Link href={`/p/${it.slug}`} className="cart-thumb">
+              <Link href={href} className="cart-thumb">
                 <Image src={it.image} alt={it.name} fill sizes="120px" />
               </Link>
               <div className="cart-meta">
                 <div className="cart-item-top">
-                  <Link href={`/p/${it.slug}`} className="cart-name">
+                  <Link href={href} className="cart-name">
                     {it.name}
                   </Link>
                   <span className="cart-tag">
-                    {it.type === "CUSTOM" ? "Made-to-Measure" : `Ready-Made · ${it.size ?? ""}`}
+                    {it.type === "CUSTOM"
+                      ? "Made-to-Measure"
+                      : it.type === "FABRIC"
+                        ? `Fabric · ${it.yards ?? ""} yd`
+                        : `Ready-Made · ${it.size ?? ""}`}
                   </span>
                 </div>
                 {it.selections && (
@@ -72,7 +78,8 @@ export default function CartPage() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <aside className="cart-summary">

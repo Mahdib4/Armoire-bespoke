@@ -1,8 +1,39 @@
 import "server-only";
 import { cache } from "react";
 import { prisma } from "./prisma";
+import { slugify } from "./slug";
 
 export type Settings = Record<string, string>;
+
+export type Fabric = { name: string; slug: string; image: string; images: string[]; price: number };
+
+/** All fabrics from the Fabric Collection section, with slug + gallery images. */
+export const getFabrics = cache(async (): Promise<Fabric[]> => {
+  const section = await prisma.section.findUnique({ where: { key: "fabric" } });
+  let raw: unknown[] = [];
+  try {
+    raw = JSON.parse(section?.config || "{}").swatches ?? [];
+  } catch {}
+  return raw
+    .map((s): Fabric => {
+      if (typeof s === "string") return { name: s, slug: slugify(s), image: "", images: [], price: 0 };
+      const o = s as { name?: string; image?: string; images?: string[]; price?: number | string };
+      const images = Array.isArray(o.images) ? o.images.filter(Boolean) : [];
+      return {
+        name: o.name || "",
+        slug: slugify(o.name || ""),
+        image: o.image || "",
+        images,
+        price: Number(o.price) || 0,
+      };
+    })
+    .filter((f) => f.name);
+});
+
+export const getFabricBySlug = cache(async (slug: string): Promise<Fabric | null> => {
+  const fabrics = await getFabrics();
+  return fabrics.find((f) => f.slug === slug) ?? null;
+});
 
 // cache() dedupes identical calls within a single render (e.g. layout + page,
 // or generateMetadata + page), cutting DB round-trips roughly in half.

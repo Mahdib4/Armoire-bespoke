@@ -38,6 +38,7 @@ model Category {
   bannerType        String             @default("image") // image | video
   bannerUrl         String?
   posterUrl         String?
+  sizeChartUrl      String?            // shown on Ready-Made product pages
   products          Product[]
   measurementFields MeasurementField[]
   createdAt         DateTime           @default(now())

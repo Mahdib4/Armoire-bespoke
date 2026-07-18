@@ -24,9 +24,20 @@
   flex-direction: column;
   padding: 1.8rem 1.4rem;
 }
-.adm-brand { display: flex; flex-direction: column; margin-bottom: 2rem; }
-.adm-brand span { font-size: 1.2rem; letter-spacing: 0.28em; color: var(--ivory); }
-.adm-brand em { font-style: normal; color: var(--gold); font-size: 0.58rem; letter-spacing: 0.24em; text-transform: uppercase; margin-top: 4px; }
+.adm-brand { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 2rem; text-decoration: none; }
+.adm-brand-logo { height: 40px; width: auto; object-fit: contain; }
+.adm-brand-tagline {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-indent: 0;
+  margin-top: 0.35rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.adm-brand em { font-style: normal; color: var(--gold); font-size: 0.55rem; letter-spacing: 0.24em; text-transform: uppercase; margin-top: 0.5rem; }
 .adm-nav { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
 .adm-nav a {
   color: var(--text-muted);
@@ -193,6 +204,16 @@
 .adm-swatch-thumb span { font-size: 0.6rem; color: var(--text-muted); }
 .adm-swatch-name { flex: 1; min-width: 140px; }
 .adm-swatch-actions { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.adm-swatch-col { flex-direction: column; align-items: stretch; }
+.adm-swatch-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.adm-swatch-gallery { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.adm-swatch-galimg { position: relative; width: 48px; height: 36px; border: 1px solid var(--border); overflow: hidden; }
+.adm-swatch-galimg img { width: 100%; height: 100%; object-fit: cover; }
+.adm-swatch-galimg button {
+  position: absolute; top: 0; right: 0;
+  width: 16px; height: 16px; line-height: 1;
+  background: rgba(0,0,0,0.7); color: #fff; border: none; cursor: pointer; font-size: 0.6rem;
+}
 .adm-back { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; }
 .adm-back:hover { color: var(--gold); }
 

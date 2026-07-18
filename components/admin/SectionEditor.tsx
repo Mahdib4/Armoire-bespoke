@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
 
-type Swatch = { name: string; image: string; price: number };
+type Swatch = { name: string; image: string; images: string[]; price: number };
 
 function parseSwatches(config: string): Swatch[] {
   try {
@@ -11,10 +11,11 @@ function parseSwatches(config: string): Swatch[] {
     if (!Array.isArray(raw)) return [];
     return raw.map((s: unknown) =>
       typeof s === "string"
-        ? { name: s, image: "", price: 0 }
+        ? { name: s, image: "", images: [], price: 0 }
         : {
             name: (s as Swatch).name || "",
             image: (s as Swatch).image || "",
+            images: Array.isArray((s as Swatch).images) ? (s as Swatch).images.filter(Boolean) : [],
             price: Number((s as Swatch).price) || 0,
           }
     );
@@ -50,7 +51,12 @@ export default function SectionEditor({
       if (isFabric) {
         const cleaned = swatches
           .filter((s) => s.name.trim())
-          .map((s) => ({ name: s.name.trim(), image: s.image, price: Number(s.price) || 0 }));
+          .map((s) => ({
+            name: s.name.trim(),
+            image: s.image,
+            images: s.images.filter(Boolean),
+            price: Number(s.price) || 0,
+          }));
         body.config = JSON.stringify({ swatches: cleaned });
       }
       const res = await fetch(`/api/admin/sections/${f.key}`, {
@@ -89,46 +95,59 @@ export default function SectionEditor({
       {isFabric && (
         <div className="adm-field wide" style={{ marginTop: "1rem" }}>
           <label>Fabric Swatches</label>
-          <p className="adm-hint">Add a name and (optionally) a photo for each fabric. Photos replace the plain colour tile.</p>
+          <p className="adm-hint">Add a name, price/yard, a cover photo and extra photos for each fabric. Fabrics get their own page (photos + buy by the yard).</p>
           <div className="adm-swatches">
             {swatches.map((s, i) => (
-              <div key={i} className="adm-swatch">
-                <div className="adm-swatch-thumb">
-                  {s.image ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={s.image} alt={s.name} />
-                  ) : (
-                    <span>No photo</span>
-                  )}
-                </div>
-                <input
-                  className="adm-swatch-name"
-                  placeholder="Fabric name"
-                  value={s.name}
-                  onChange={(e) => setSwatch(i, { name: e.target.value })}
-                />
-                <input
-                  className="adm-swatch-price"
-                  type="number"
-                  min={0}
-                  placeholder="Price / yard (Tk)"
-                  value={s.price || ""}
-                  onChange={(e) => setSwatch(i, { price: Number(e.target.value) || 0 })}
-                />
-                <div className="adm-swatch-actions">
-                  <Uploader accept="image/*" label={s.image ? "Replace" : "Add photo"} onUploaded={(url) => setSwatch(i, { image: url })} />
-                  {s.image && (
-                    <button className="adm-btn sm" type="button" onClick={() => setSwatch(i, { image: "" })}>
-                      Remove photo
+              <div key={i} className="adm-swatch adm-swatch-col">
+                <div className="adm-swatch-row">
+                  <div className="adm-swatch-thumb">
+                    {s.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={s.image} alt={s.name} />
+                    ) : (
+                      <span>Cover</span>
+                    )}
+                  </div>
+                  <input
+                    className="adm-swatch-name"
+                    placeholder="Fabric name"
+                    value={s.name}
+                    onChange={(e) => setSwatch(i, { name: e.target.value })}
+                  />
+                  <input
+                    className="adm-swatch-price"
+                    type="number"
+                    min={0}
+                    placeholder="Price / yard (Tk)"
+                    value={s.price || ""}
+                    onChange={(e) => setSwatch(i, { price: Number(e.target.value) || 0 })}
+                  />
+                  <div className="adm-swatch-actions">
+                    <Uploader accept="image/*" label={s.image ? "Replace cover" : "Cover photo"} onUploaded={(url) => setSwatch(i, { image: url })} />
+                    {s.image && (
+                      <button className="adm-btn sm" type="button" onClick={() => setSwatch(i, { image: "" })}>
+                        Remove
+                      </button>
+                    )}
+                    <button
+                      className="adm-btn sm danger"
+                      type="button"
+                      onClick={() => setSwatches((list) => list.filter((_, x) => x !== i))}
+                    >
+                      ✕
                     </button>
-                  )}
-                  <button
-                    className="adm-btn sm danger"
-                    type="button"
-                    onClick={() => setSwatches((list) => list.filter((_, x) => x !== i))}
-                  >
-                    ✕
-                  </button>
+                  </div>
+                </div>
+                <div className="adm-swatch-gallery">
+                  <span className="adm-hint" style={{ margin: 0 }}>Extra photos ({s.images.length}):</span>
+                  {s.images.map((img, gi) => (
+                    <span key={gi} className="adm-swatch-galimg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img} alt="" />
+                      <button type="button" onClick={() => setSwatch(i, { images: s.images.filter((_, x) => x !== gi) })}>✕</button>
+                    </span>
+                  ))}
+                  <Uploader accept="image/*" label="+ Photo" onUploaded={(url) => setSwatch(i, { images: [...s.images, url] })} />
                 </div>
               </div>
             ))}
@@ -137,7 +156,7 @@ export default function SectionEditor({
             className="adm-btn sm"
             type="button"
             style={{ marginTop: "0.7rem" }}
-            onClick={() => setSwatches((list) => [...list, { name: "", image: "", price: 0 }])}
+            onClick={() => setSwatches((list) => [...list, { name: "", image: "", images: [], price: 0 }])}
           >
             + Add Fabric
           </button>
