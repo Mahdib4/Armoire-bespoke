@@ -186,6 +186,72 @@ export async function sendEnquiryEmail(e: EnquiryEmailData): Promise<{ sent: boo
   return { sent: true };
 }
 
+// Customer-facing copy for each delivery status.
+const STATUS_COPY: Record<string, { title: string; intro: string } | undefined> = {
+  CONFIRMED: {
+    title: "Your order is confirmed",
+    intro:
+      "We've confirmed your order and our atelier is preparing to begin. We'll keep you updated at every step.",
+  },
+  IN_MAKING: {
+    title: "Your order is being made",
+    intro:
+      "Wonderful news — your garment is now in the hands of our master tailor. Every stitch is being crafted to your measurements.",
+  },
+  READY: {
+    title: "Your order is ready for delivery",
+    intro:
+      "Your order is finished and ready. We'll be in touch to arrange delivery, or you're welcome to collect it from our Dhanmondi atelier.",
+  },
+  DELIVERED: {
+    title: "Your order has been delivered",
+    intro:
+      "Your order has been delivered — we hope you love it. Thank you for choosing Armoire Bespoke. Tailored to define you.",
+  },
+  CANCELLED: {
+    title: "Your order has been cancelled",
+    intro:
+      "Your order has been cancelled. If this was unexpected or you have any questions, please reply to this email or call our atelier.",
+  },
+};
+
+export type OrderStatusEmailData = { publicId: string; customerName: string; email: string; status: string };
+
+/** Notifies the customer when the admin changes their order's delivery status. */
+export async function sendOrderStatusEmail(o: OrderStatusEmailData): Promise<{ sent: boolean }> {
+  const copy = STATUS_COPY[o.status];
+  if (!copy) return { sent: false }; // no email for PENDING or unknown statuses
+  const t = transport();
+  const from = process.env.MAIL_FROM || "Armoire Bespoke <no-reply@armoirebespoke.com>";
+
+  const html = `
+  <div style="background:${BG};padding:32px 0;font-family:Arial,sans-serif">
+    <div style="max-width:600px;margin:0 auto;background:${CARD};border:1px solid #242424">
+      <div style="padding:34px 34px 20px;text-align:center;border-bottom:1px solid #242424">
+        <div style="font-family:Georgia,serif;letter-spacing:.34em;color:${IVORY};font-size:24px">ARMOIRE</div>
+        <div style="color:${GOLD};font-style:italic;font-family:Georgia,serif;font-size:13px;margin-top:2px">Bespoke</div>
+      </div>
+      <div style="padding:30px 34px">
+        <h1 style="color:${IVORY};font-family:Georgia,serif;font-weight:normal;font-size:22px;margin:0 0 6px">${copy.title}</h1>
+        <p style="color:#b8b2a6;font-size:14px;line-height:1.6;margin:0 0 22px">Dear ${o.customerName}, ${copy.intro}</p>
+        <div style="color:#8f8a80;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Order</div>
+        <div style="color:${GOLD};font-family:Georgia,serif;font-size:18px">${o.publicId}</div>
+      </div>
+      <div style="padding:20px 34px;border-top:1px solid #242424;text-align:center;color:#6d685f;font-size:11px;letter-spacing:.06em">
+        Armoire Bespoke · Dhanmondi, Dhaka · Tailored to define you
+      </div>
+    </div>
+  </div>`;
+
+  if (!t) {
+    console.log(`\n[email:preview] order ${o.publicId} → ${o.status}: "${copy.title}" to <${o.email}>`);
+    return { sent: false };
+  }
+
+  await t.sendMail({ from, to: o.email, subject: `Armoire Bespoke — ${copy.title} (${o.publicId})`, html });
+  return { sent: true };
+}
+
 export async function sendOrderEmails(o: OrderEmailData): Promise<{ sent: boolean }> {
   const t = transport();
   const from = process.env.MAIL_FROM || "Armoire Bespoke <no-reply@armoirebespoke.com>";

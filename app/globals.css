@@ -1619,9 +1619,10 @@ html.lenis body {
 .insp-hero-c { position: relative; z-index: 2; padding: clamp(1.5rem, 5vw, 3.5rem); max-width: 720px; }
 .insp-hero-title {
   font-family: var(--font-cinzel), serif;
-  font-size: clamp(2rem, 6vw, 3.6rem);
+  font-size: clamp(1.7rem, 5vw, 3.1rem);
+  line-height: 1.08;
   color: var(--ivory);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   margin: 0.4rem 0;
 }
 .insp-hero-tag {
@@ -1694,7 +1695,7 @@ html.lenis body {
 .fb-input {
   width: 100%;
   background: var(--charcoal);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(201, 168, 76, 0.3);
   color: var(--ivory);
   padding: 0.6rem 0.7rem;
   font-size: 0.9rem;
@@ -1978,8 +1979,8 @@ html.lenis body {
 .field input,
 .field textarea,
 .field select {
-  background: var(--black);
-  border: 1px solid var(--border);
+  background: var(--charcoal);
+  border: 1px solid rgba(201, 168, 76, 0.3);
   color: var(--ivory);
   padding: 0.8rem 0.9rem;
   font-size: 0.9rem;

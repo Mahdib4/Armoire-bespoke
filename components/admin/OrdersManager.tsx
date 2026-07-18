@@ -27,13 +27,21 @@ type Order = {
   items: Item[];
 };
 
-const STATUSES = ["PENDING", "CONFIRMED", "CANCELLED"];
+const STATUSES: { value: string; label: string }[] = [
+  { value: "PENDING", label: "Pending" },
+  { value: "CONFIRMED", label: "Confirmed" },
+  { value: "IN_MAKING", label: "In Making" },
+  { value: "READY", label: "Ready for Delivery" },
+  { value: "DELIVERED", label: "Delivered" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
 
 export default function OrdersManager({ orders }: { orders: Order[] }) {
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null);
 
   const setStatus = async (id: string, status: string) => {
+    // The API saves the status and emails the customer their new delivery status.
     await fetch(`/api/admin/orders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -68,7 +76,7 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
                 <td>
                   <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)}
                     style={{ background: "#0b0b0b", border: "1px solid var(--border)", color: "var(--ivory)", padding: "0.3rem 0.4rem", fontSize: "0.72rem" }}>
-                    {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
                 </td>
                 <td style={{ fontSize: "0.72rem" }}>{new Date(o.createdAt).toLocaleDateString()}</td>
