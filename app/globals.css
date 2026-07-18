@@ -1592,6 +1592,25 @@ html.lenis body {
   border-top: 1px solid rgba(201, 168, 76, 0.12);
   border-bottom: 1px solid rgba(201, 168, 76, 0.12);
 }
+.insp-band.has-media {
+  position: relative;
+  overflow: hidden;
+}
+.insp-band-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.insp-band-ov {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(rgba(6, 6, 6, 0.62), rgba(6, 6, 6, 0.78));
+}
+.insp-band.has-media .insp-band-c { position: relative; z-index: 2; }
 .insp-band-c { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .insp-band-body {
   color: var(--text-muted);

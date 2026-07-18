@@ -69,7 +69,11 @@ export default async function HomePage() {
 
       <PriceChart src={settings.priceChart || "/media/price-chart.jpeg"} />
 
-      <InspirationBand />
+      <InspirationBand
+        image={settings.inspirationHeroImg}
+        video={settings.inspirationHero}
+        poster={settings.inspirationHeroPoster}
+      />
 
       <CustomerWords reviews={reviews} show={settings.reviewsShow !== "0"} />
 
