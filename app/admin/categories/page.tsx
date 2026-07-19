@@ -1,13 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import CategoryEditor from "@/components/admin/CategoryEditor";
+import { getSettings } from "@/lib/data";
+import { categoryTailoringCharge } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminCategories() {
-  const cats = await prisma.category.findMany({
-    orderBy: { order: "asc" },
-    include: { measurementFields: { orderBy: { order: "asc" } } },
-  });
+  const [cats, settings] = await Promise.all([
+    prisma.category.findMany({
+      orderBy: { order: "asc" },
+      include: { measurementFields: { orderBy: { order: "asc" } } },
+    }),
+    getSettings(),
+  ]);
 
   return (
     <div>
@@ -22,6 +27,7 @@ export default async function AdminCategories() {
           key={c.id}
           category={{
             id: c.id,
+            slug: c.slug,
             name: c.name,
             tagline: c.tagline || "",
             description: c.description || "",
@@ -29,6 +35,7 @@ export default async function AdminCategories() {
             bannerUrl: c.bannerUrl || "",
             posterUrl: c.posterUrl || "",
             sizeChartUrl: c.sizeChartUrl || "",
+            tailoringCharge: categoryTailoringCharge(settings, c.slug),
             order: c.order,
             active: c.active,
             measurements: c.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),

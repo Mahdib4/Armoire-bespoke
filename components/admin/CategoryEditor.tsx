@@ -2,10 +2,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
+import { tailoringChargeKey } from "@/lib/pricing";
 
 type Measurement = { label: string; unit: string; hint: string | null };
 export type CategoryForm = {
   id: string;
+  slug: string;
   name: string;
   tagline: string;
   description: string;
@@ -13,6 +15,7 @@ export type CategoryForm = {
   bannerUrl: string;
   posterUrl: string;
   sizeChartUrl: string;
+  tailoringCharge: number;
   order: number;
   active: boolean;
   measurements: Measurement[];
@@ -29,22 +32,33 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch(`/api/admin/categories/${f.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: f.name,
-          tagline: f.tagline || null,
-          description: f.description || null,
-          bannerType: f.bannerType,
-          bannerUrl: f.bannerUrl || null,
-          posterUrl: f.posterUrl || null,
-          sizeChartUrl: f.sizeChartUrl || null,
-          order: Number(f.order),
-          active: f.active,
-          measurements: f.measurements.filter((m) => m.label.trim()),
+      // Category fields + the per-category tailoring charge (stored in settings)
+      // are saved together.
+      const [res] = await Promise.all([
+        fetch(`/api/admin/categories/${f.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: f.name,
+            tagline: f.tagline || null,
+            description: f.description || null,
+            bannerType: f.bannerType,
+            bannerUrl: f.bannerUrl || null,
+            posterUrl: f.posterUrl || null,
+            sizeChartUrl: f.sizeChartUrl || null,
+            order: Number(f.order),
+            active: f.active,
+            measurements: f.measurements.filter((m) => m.label.trim()),
+          }),
         }),
-      });
+        fetch("/api/admin/settings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            settings: [{ key: tailoringChargeKey(f.slug), value: String(Math.max(0, Math.round(Number(f.tailoringCharge) || 0))) }],
+          }),
+        }),
+      ]);
       if (!res.ok) throw new Error();
       setMsg("Saved.");
       router.refresh();
@@ -66,6 +80,11 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
         <div className="adm-field">
           <label>Order</label>
           <input type="number" value={f.order} onChange={(e) => upd("order", Number(e.target.value))} />
+        </div>
+        <div className="adm-field">
+          <label>Tailoring Charge (Tk) · Tailor Made</label>
+          <input type="number" min={0} value={f.tailoringCharge} onChange={(e) => upd("tailoringCharge", Number(e.target.value))} />
+          <span className="adm-hint">Applied to every tailor-made piece in this collection. Final price = this charge + fabric price × yards.</span>
         </div>
         <div className="adm-field wide">
           <label>Tagline</label>

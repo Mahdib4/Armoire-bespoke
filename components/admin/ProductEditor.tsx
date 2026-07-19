@@ -133,11 +133,11 @@ export default function ProductEditor({
           )}
           {isTailor && (
             <div className="adm-field wide">
-              <label>Tailoring Charge (Tk)</label>
-              <input type="number" min={0} value={f.tailoringCharge} onChange={(e) => upd("tailoringCharge", Number(e.target.value))} />
+              <label>Pricing</label>
               <span className="adm-hint">
-                No base price needed. Final price = tailoring charge + fabric price × yards the garment needs
-                (fabric prices are set in the Fabric section).
+                Tailor-Made price is calculated automatically: the collection&rsquo;s tailoring charge + fabric price ×
+                yards the garment needs. Set the tailoring charge per collection in <strong>Categories &amp; Banners</strong>;
+                fabric prices in the <strong>Fabric</strong> section.
               </span>
             </div>
           )}

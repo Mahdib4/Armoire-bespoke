@@ -22,6 +22,21 @@ export function garmentYards(categorySlug: string): number {
   return GARMENT_YARDS[categorySlug] ?? 0;
 }
 
+/** Settings key holding a category's fixed tailoring charge. */
+export function tailoringChargeKey(categorySlug: string): string {
+  return `tailorCharge:${categorySlug}`;
+}
+
+/** A category's fixed tailoring charge (Tk), read from Site Settings. Admin-set
+ *  per category; 0 if not configured. */
+export function categoryTailoringCharge(
+  settings: Record<string, string>,
+  categorySlug: string
+): number {
+  const v = Number(settings[tailoringChargeKey(categorySlug)]);
+  return Number.isFinite(v) && v > 0 ? Math.round(v) : 0;
+}
+
 /** Cheapest priced fabric per yard across the given price map (0 if none). */
 export function minFabricPrice(prices: Record<string, number>): number {
   const vals = Object.values(prices).filter((v) => v > 0);

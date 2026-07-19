@@ -3,8 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { sendAdminPush } from "@/lib/push";
-import { getFabricPrices } from "@/lib/data";
-import { tailorPrice, fabricFromSelections } from "@/lib/pricing";
+import { getFabricPrices, getSettings } from "@/lib/data";
+import { tailorPrice, fabricFromSelections, categoryTailoringCharge } from "@/lib/pricing";
 import { formatTk, orderPublicId } from "@/lib/format";
 
 export const runtime = "nodejs";
@@ -59,8 +59,8 @@ export async function POST(req: Request) {
   });
   const byId = new Map(products.map((p) => [p.id, p]));
   // Fabric prices (Fabric Collection section) drive both fabric-by-the-yard lines
-  // and Tailor-Made pricing (tailoring charge + chosen fabric × yards).
-  const fabricPrices = await getFabricPrices();
+  // and Tailor-Made pricing. Settings hold each category's fixed tailoring charge.
+  const [fabricPrices, settings] = await Promise.all([getFabricPrices(), getSettings()]);
 
   const lineData = items
     .map((it) => {
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
       } else {
         const fabricName = fabricFromSelections(it.selections, fabricPrices);
         const perYard = fabricName ? fabricPrices[fabricName] : 0;
-        unit = tailorPrice(p.tailoringCharge, p.category.slug, perYard);
+        unit = tailorPrice(categoryTailoringCharge(settings, p.category.slug), p.category.slug, perYard);
       }
       return {
         productId: p.id,
