@@ -56,10 +56,20 @@ export default function NewProductForm({
             <option value="READYMADE">Ready Made</option>
           </select>
         </div>
-        <div className="adm-field">
-          <label>Price (Tk)</label>
-          <input type="number" min={0} value={priceTk} onChange={(e) => setPriceTk(Number(e.target.value))} />
-        </div>
+        {type === "READYMADE" ? (
+          <div className="adm-field">
+            <label>Price (Tk)</label>
+            <input type="number" min={0} value={priceTk} onChange={(e) => setPriceTk(Number(e.target.value))} />
+          </div>
+        ) : (
+          <div className="adm-field wide">
+            <label>Pricing</label>
+            <span className="adm-hint">
+              Tailor-Made price is calculated automatically from the tailoring charge + fabric price. You&rsquo;ll
+              set the tailoring charge on the next screen.
+            </span>
+          </div>
+        )}
       </div>
       {error && <p className="adm-msg err">{error}</p>}
       <div className="adm-actions">

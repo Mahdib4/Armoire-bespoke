@@ -125,14 +125,22 @@ export default function ProductEditor({
               <button type="button" className={f.type === "READYMADE" ? "on" : ""} onClick={() => upd("type", "READYMADE")}>Ready Made</button>
             </div>
           </div>
-          <div className="adm-field">
-            <label>Price (Tk)</label>
-            <input type="number" min={0} value={f.priceTk} onChange={(e) => upd("priceTk", Number(e.target.value))} />
-          </div>
-          <div className="adm-field">
-            <label>Tailoring Charge (Tk) {isTailor ? "" : "· Tailor Made only"}</label>
-            <input type="number" min={0} value={f.tailoringCharge} onChange={(e) => upd("tailoringCharge", Number(e.target.value))} />
-          </div>
+          {!isTailor && (
+            <div className="adm-field">
+              <label>Price (Tk)</label>
+              <input type="number" min={0} value={f.priceTk} onChange={(e) => upd("priceTk", Number(e.target.value))} />
+            </div>
+          )}
+          {isTailor && (
+            <div className="adm-field wide">
+              <label>Tailoring Charge (Tk)</label>
+              <input type="number" min={0} value={f.tailoringCharge} onChange={(e) => upd("tailoringCharge", Number(e.target.value))} />
+              <span className="adm-hint">
+                No base price needed. Final price = tailoring charge + fabric price × yards the garment needs
+                (fabric prices are set in the Fabric section).
+              </span>
+            </div>
+          )}
           <div className="adm-field wide">
             <label>Description</label>
             <textarea rows={3} value={f.description} onChange={(e) => upd("description", e.target.value)} />

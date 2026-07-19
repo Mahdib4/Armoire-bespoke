@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { sendAdminPush } from "@/lib/push";
 import { getFabricPrices } from "@/lib/data";
+import { tailorPrice, fabricFromSelections } from "@/lib/pricing";
 import { formatTk, orderPublicId } from "@/lib/format";
 
 export const runtime = "nodejs";
@@ -54,10 +55,12 @@ export async function POST(req: Request) {
   // Re-price from DB (never trust client prices).
   const products = await prisma.product.findMany({
     where: { id: { in: items.filter((i) => !i.fabric).map((i) => i.productId) }, active: true },
+    include: { category: { select: { slug: true } } },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
-  // Fabric-by-the-yard prices come from the Fabric Collection section.
-  const fabricPrices = items.some((i) => i.fabric) ? await getFabricPrices() : {};
+  // Fabric prices (Fabric Collection section) drive both fabric-by-the-yard lines
+  // and Tailor-Made pricing (tailoring charge + chosen fabric × yards).
+  const fabricPrices = await getFabricPrices();
 
   const lineData = items
     .map((it) => {
@@ -80,8 +83,16 @@ export async function POST(req: Request) {
       }
       const p = byId.get(it.productId);
       if (!p) return null;
-      // Tailor Made line price includes the tailoring charge.
-      const unit = p.type === "READYMADE" ? p.priceTk : p.priceTk + p.tailoringCharge;
+      // Ready Made = fixed price. Tailor Made = tailoring charge + the chosen
+      // fabric's price × the yards this garment needs (no admin base price).
+      let unit: number;
+      if (p.type === "READYMADE") {
+        unit = p.priceTk;
+      } else {
+        const fabricName = fabricFromSelections(it.selections, fabricPrices);
+        const perYard = fabricName ? fabricPrices[fabricName] : 0;
+        unit = tailorPrice(p.tailoringCharge, p.category.slug, perYard);
+      }
       return {
         productId: p.id,
         productName: p.name,

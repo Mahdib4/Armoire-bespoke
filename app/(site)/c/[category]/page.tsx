@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import CategoryTabs from "@/components/CategoryTabs";
 import LazyVideo from "@/components/LazyVideo";
-import { getCategoryBySlug, getSettings, getNavCategories } from "@/lib/data";
+import { getCategoryBySlug, getSettings, getNavCategories, getFabricPrices } from "@/lib/data";
+import { cardPrice } from "@/lib/pricing";
 
 export const revalidate = 120;
 
@@ -31,7 +32,11 @@ export default async function CategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category: slug } = await params;
-  const [cat, settings] = await Promise.all([getCategoryBySlug(slug), getSettings()]);
+  const [cat, settings, fabricPrices] = await Promise.all([
+    getCategoryBySlug(slug),
+    getSettings(),
+    getFabricPrices(),
+  ]);
   if (!cat || !cat.active) notFound();
   const currency = settings.currency || "Tk";
   const isVideo = cat.bannerType === "video" && cat.bannerUrl;
@@ -39,7 +44,8 @@ export default async function CategoryPage({
   const toCard = (p: (typeof cat.products)[number]) => ({
     slug: p.slug,
     name: p.name,
-    priceTk: p.priceTk,
+    // Tailor-Made shows a fabric-derived "starts from"; Ready-Made its fixed price.
+    priceTk: cardPrice(p.type, p.priceTk, p.tailoringCharge, slug, fabricPrices),
     type: p.type,
     images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
   });

@@ -6,6 +6,7 @@ import ProductPanel, { type ProductView } from "@/components/ProductPanel";
 import ProductRail from "@/components/ProductRail";
 import CustomerWords from "@/components/CustomerWords";
 import { getProductBySlug, getSettings, getAllProductSlugs, getFabricPrices, getReviews } from "@/lib/data";
+import { cardPrice } from "@/lib/pricing";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
@@ -142,7 +143,8 @@ export default async function ProductPage({
             products={related.map((p) => ({
               slug: p.slug,
               name: p.name,
-              priceTk: p.priceTk,
+              // Related items share this product's category, so use its slug for yardage.
+              priceTk: cardPrice(p.type, p.priceTk, p.tailoringCharge, product.category.slug, fabricPrices),
               type: p.type,
               images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
             }))}
