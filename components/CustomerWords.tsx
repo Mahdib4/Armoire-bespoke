@@ -16,6 +16,45 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+function Card({
+  review,
+  onPhoto,
+  style,
+  ariaHidden,
+}: {
+  review: ReviewView;
+  onPhoto: (p: string) => void;
+  style?: React.CSSProperties;
+  ariaHidden?: boolean;
+}) {
+  return (
+    <figure className="cw-card" style={style} aria-hidden={ariaHidden || undefined}>
+      <Stars rating={review.rating} />
+      <blockquote className="cw-text">{review.text}</blockquote>
+      {review.photos.length > 0 && (
+        <div className="cw-photos">
+          {review.photos.map((p, j) => (
+            <button
+              key={j}
+              type="button"
+              className="cw-photo"
+              onClick={() => onPhoto(p)}
+              aria-label={`View photo from ${review.author}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p} alt="" loading="lazy" decoding="async" />
+            </button>
+          ))}
+        </div>
+      )}
+      <figcaption className="cw-by">
+        <span className="cw-name">{review.author}</span>
+        {review.location && <span className="cw-loc">{review.location}</span>}
+      </figcaption>
+    </figure>
+  );
+}
+
 export default function CustomerWords({
   reviews,
   show = true,
@@ -56,6 +95,9 @@ export default function CustomerWords({
 
   if (!show || reviews.length === 0) return null;
 
+  // Duplicate the set so the mobile marquee loops seamlessly (mirrors the lookbook).
+  const loop = [...reviews, ...reviews];
+
   return (
     <section ref={ref} className={`cw${visible ? " cw-in" : ""}`}>
       <div className="sec-head">
@@ -64,33 +106,33 @@ export default function CustomerWords({
       </div>
       {subtitle && <p className="cw-sub">{subtitle}</p>}
 
+      {/* Desktop / tablet: revealing grid */}
       <div className="cw-grid">
         {reviews.map((r, i) => (
-          <figure key={r.id} className="cw-card" style={{ transitionDelay: `${Math.min(i, 6) * 70}ms` }}>
-            <Stars rating={r.rating} />
-            <blockquote className="cw-text">{r.text}</blockquote>
-            {r.photos.length > 0 && (
-              <div className="cw-photos">
-                {r.photos.map((p, j) => (
-                  <button
-                    key={j}
-                    type="button"
-                    className="cw-photo"
-                    onClick={() => setLightbox(p)}
-                    aria-label={`View photo from ${r.author}`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p} alt="" loading="lazy" decoding="async" />
-                  </button>
-                ))}
-              </div>
-            )}
-            <figcaption className="cw-by">
-              <span className="cw-name">{r.author}</span>
-              {r.location && <span className="cw-loc">{r.location}</span>}
-            </figcaption>
-          </figure>
+          <Card
+            key={r.id}
+            review={r}
+            onPhoto={setLightbox}
+            style={{ transitionDelay: `${Math.min(i, 6) * 70}ms` }}
+          />
         ))}
+      </div>
+
+      {/* Mobile: single-row auto-scrolling marquee, like the lookbook */}
+      <div className="cw-marquee">
+        <div className="cw-track" style={{ ["--cw-count" as string]: reviews.length }}>
+          {loop.map((r, i) => (
+            <Card
+              key={`${r.id}-${i}`}
+              review={r}
+              onPhoto={setLightbox}
+              // Second copy is decorative; keep it out of the a11y tree.
+              {...(i >= reviews.length ? { "aria-hidden": true } : {})}
+            />
+          ))}
+        </div>
+        <div className="cw-mfade left" />
+        <div className="cw-mfade right" />
       </div>
 
       {lightbox && (
