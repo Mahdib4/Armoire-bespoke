@@ -105,6 +105,21 @@ export const getFabricPrices = cache(async (): Promise<Record<string, number>> =
   return out;
 });
 
+/** Fabric names a category offers, from the fabric option group scoped to it
+ *  (Admin → Bespoke Options). Blazer fabrics can differ from shirt fabrics.
+ *  An empty array means "not restricted" — every priced fabric is offered. */
+export const getCategoryFabricNames = cache(async (categorySlug: string): Promise<string[]> => {
+  try {
+    const group = await prisma.customizationGroup.findFirst({
+      where: { kind: "fabric", category: { slug: categorySlug } },
+      include: { choices: { orderBy: { order: "asc" } } },
+    });
+    return group ? group.choices.map((c) => c.label) : [];
+  } catch {
+    return [];
+  }
+});
+
 export const getCategoryBySlug = cache(async (slug: string) => {
   return prisma.category.findUnique({
     where: { slug },

@@ -3,8 +3,16 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { sendAdminPush } from "@/lib/push";
-import { getFabricPrices, getSettings } from "@/lib/data";
-import { tailorPrice, fabricFromSelections, categoryTailoringCharge } from "@/lib/pricing";
+import { getCategoryFabricNames, getFabricPrices, getSettings } from "@/lib/data";
+import {
+  tailorPrice,
+  fabricFromSelections,
+  categoryTailoringCharge,
+  garmentYards,
+  allowedFabricPrices,
+  deliveryCharge,
+  isDeliveryZone,
+} from "@/lib/pricing";
 import { formatTk, orderPublicId } from "@/lib/format";
 
 export const runtime = "nodejs";
@@ -35,6 +43,7 @@ const OrderSchema = z.object({
     appointment: z.string().max(60).optional(),
     note: z.string().max(600).optional(),
   }),
+  deliveryZone: z.enum(["inside-dhaka", "outside-dhaka"]).optional(),
   items: z.array(ItemSchema).min(1).max(30),
 });
 
@@ -59,8 +68,15 @@ export async function POST(req: Request) {
   });
   const byId = new Map(products.map((p) => [p.id, p]));
   // Fabric prices (Fabric Collection section) drive both fabric-by-the-yard lines
-  // and Tailor-Made pricing. Settings hold each category's fixed tailoring charge.
+  // and Tailor-Made pricing. Settings hold each category's fixed tailoring charge
+  // and yards needed. Each category may also offer only a subset of fabrics.
   const [fabricPrices, settings] = await Promise.all([getFabricPrices(), getSettings()]);
+  const catSlugs = [...new Set(products.map((p) => p.category.slug))];
+  const catFabrics = new Map(
+    await Promise.all(
+      catSlugs.map(async (slug) => [slug, await getCategoryFabricNames(slug)] as const)
+    )
+  );
 
   const lineData = items
     .map((it) => {
@@ -89,9 +105,15 @@ export async function POST(req: Request) {
       if (p.type === "READYMADE") {
         unit = p.priceTk;
       } else {
-        const fabricName = fabricFromSelections(it.selections, fabricPrices);
-        const perYard = fabricName ? fabricPrices[fabricName] : 0;
-        unit = tailorPrice(categoryTailoringCharge(settings, p.category.slug), p.category.slug, perYard);
+        const slug = p.category.slug;
+        const prices = allowedFabricPrices(fabricPrices, catFabrics.get(slug));
+        const fabricName = fabricFromSelections(it.selections, prices);
+        const perYard = fabricName ? prices[fabricName] : 0;
+        unit = tailorPrice(
+          categoryTailoringCharge(settings, slug),
+          garmentYards(slug, settings),
+          perYard
+        );
       }
       return {
         productId: p.id,
@@ -110,6 +132,10 @@ export async function POST(req: Request) {
   }
 
   const subtotal = lineData.reduce((n, l) => n + l.priceTk * l.qty, 0);
+  // Delivery is set by the customer's area and priced from Site Settings —
+  // never from the client. Defaults: Tk 70 inside Dhaka, Tk 130 outside.
+  const zone = isDeliveryZone(parsed.data.deliveryZone) ? parsed.data.deliveryZone : null;
+  const delivery = deliveryCharge(settings, zone);
   const publicId = orderPublicId();
 
   const order = await prisma.order.create({
@@ -123,6 +149,8 @@ export async function POST(req: Request) {
       appointment: customer.appointment || null,
       note: customer.note || null,
       subtotalTk: subtotal,
+      deliveryZone: zone,
+      deliveryTk: delivery,
       status: "PENDING",
       items: { create: lineData },
     },
@@ -166,6 +194,8 @@ export async function POST(req: Request) {
       city: customer.city,
       note: customer.note,
       subtotalTk: subtotal,
+      deliveryTk: delivery,
+      deliveryZone: zone,
       items: lineData.map((l) => ({
         productName: l.productName,
         type: l.type,
@@ -184,7 +214,7 @@ export async function POST(req: Request) {
   try {
     await sendAdminPush({
       title: "New order received",
-      body: `${customer.name} · ${formatTk(subtotal)} · ${lineData.length} item(s)`,
+      body: `${customer.name} · ${formatTk(subtotal + delivery)} · ${lineData.length} item(s)`,
       url: "/admin/orders",
       tag: "order",
     });

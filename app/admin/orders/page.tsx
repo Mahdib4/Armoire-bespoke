@@ -29,6 +29,8 @@ export default async function AdminOrders() {
           city: o.city,
           note: o.note,
           subtotalTk: o.subtotalTk,
+          deliveryTk: o.deliveryTk,
+          deliveryZone: o.deliveryZone,
           status: o.status,
           createdAt: o.createdAt.toISOString(),
           items: o.items.map((it) => ({

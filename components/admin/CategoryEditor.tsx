@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
-import { tailoringChargeKey } from "@/lib/pricing";
+import { fabricYardsKey, tailoringChargeKey } from "@/lib/pricing";
 
 type Measurement = { label: string; unit: string; hint: string | null };
 export type CategoryForm = {
@@ -16,6 +16,7 @@ export type CategoryForm = {
   posterUrl: string;
   sizeChartUrl: string;
   tailoringCharge: number;
+  fabricYards: number;
   order: number;
   active: boolean;
   measurements: Measurement[];
@@ -55,7 +56,10 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            settings: [{ key: tailoringChargeKey(f.slug), value: String(Math.max(0, Math.round(Number(f.tailoringCharge) || 0))) }],
+            settings: [
+              { key: tailoringChargeKey(f.slug), value: String(Math.max(0, Math.round(Number(f.tailoringCharge) || 0))) },
+              { key: fabricYardsKey(f.slug), value: String(Math.max(0, Number(f.fabricYards) || 0)) },
+            ],
           }),
         }),
       ]);
@@ -85,6 +89,17 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
           <label>Tailoring Charge (Tk) · Tailor Made</label>
           <input type="number" min={0} value={f.tailoringCharge} onChange={(e) => upd("tailoringCharge", Number(e.target.value))} />
           <span className="adm-hint">Applied to every tailor-made piece in this collection. Final price = this charge + fabric price × yards.</span>
+        </div>
+        <div className="adm-field">
+          <label>Fabric Needed (yards) · Tailor Made</label>
+          <input
+            type="number"
+            min={0}
+            step="0.25"
+            value={f.fabricYards}
+            onChange={(e) => upd("fabricYards", Number(e.target.value))}
+          />
+          <span className="adm-hint">How much cloth this garment takes. Multiplied by the fabric&rsquo;s price per yard.</span>
         </div>
         <div className="adm-field wide">
           <label>Tagline</label>

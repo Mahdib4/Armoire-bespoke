@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatTk, parseJSON } from "@/lib/format";
+import { deliveryZoneLabel } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +46,19 @@ export default async function ConfirmationPage({
                 </div>
               );
             })}
+            <div className="confirm-line confirm-sub">
+              <span>Subtotal</span>
+              <span className="tk">{formatTk(order.subtotalTk)}</span>
+            </div>
+            <div className="confirm-line confirm-sub">
+              <span>
+                Delivery {order.deliveryZone && <em>{deliveryZoneLabel(order.deliveryZone)}</em>}
+              </span>
+              <span className="tk">{formatTk(order.deliveryTk)}</span>
+            </div>
             <div className="confirm-total">
               <span>Total</span>
-              <span className="tk">{formatTk(order.subtotalTk)}</span>
+              <span className="tk">{formatTk(order.subtotalTk + order.deliveryTk)}</span>
             </div>
           </div>
           <p className="confirm-note">A confirmation has been sent to {order.email}.</p>

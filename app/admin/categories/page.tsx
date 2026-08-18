@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import CategoryEditor from "@/components/admin/CategoryEditor";
 import { getSettings } from "@/lib/data";
-import { categoryTailoringCharge } from "@/lib/pricing";
+import { categoryTailoringCharge, garmentYards } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +36,7 @@ export default async function AdminCategories() {
             posterUrl: c.posterUrl || "",
             sizeChartUrl: c.sizeChartUrl || "",
             tailoringCharge: categoryTailoringCharge(settings, c.slug),
+            fabricYards: garmentYards(c.slug, settings),
             order: c.order,
             active: c.active,
             measurements: c.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),

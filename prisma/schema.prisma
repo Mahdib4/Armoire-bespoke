@@ -41,6 +41,7 @@ model Category {
   sizeChartUrl      String?            // shown on Ready-Made product pages
   products          Product[]
   measurementFields MeasurementField[]
+  optionGroups      CustomizationGroup[] // bespoke options scoped to this collection
   createdAt         DateTime           @default(now())
 }
 
@@ -80,10 +81,15 @@ model ProductImage {
 }
 
 /// A configurable dimension of a bespoke garment (lapel, collar, cuff, pocket, vent, fabric).
+/// Fully admin-managed: groups and their choices are created and edited from
+/// Admin → Bespoke Options. A group can be scoped to one category (blazer
+/// fabrics differ from shirt fabrics) or left global (categoryId = null).
 model CustomizationGroup {
   id           String                 @id @default(cuid())
-  kind         String                 @unique // lapel | collar | cuff | pocket | vent | fabric
+  kind         String // lapel | collar | cuff | pocket | vent | fabric | <admin-defined>
   name         String
+  categoryId   String? // null = available to every category
+  category     Category?              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   referenceUrl String?
   order        Int                    @default(0)
   choices      CustomizationChoice[]
@@ -169,7 +175,9 @@ model Order {
   city         String?
   appointment  String? // Home Visit | Office Appointment | Virtual Consultation
   note         String?
-  subtotalTk   Int         @default(0)
+  subtotalTk   Int         @default(0) // items only, before delivery
+  deliveryZone String? // inside-dhaka | outside-dhaka
+  deliveryTk   Int         @default(0) // delivery charge for the chosen zone
   status       String      @default("PENDING") // PENDING | CONFIRMED | CANCELLED
   items        OrderItem[]
   createdAt    DateTime    @default(now())

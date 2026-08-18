@@ -6,7 +6,7 @@ import ProductPanel, { type ProductView } from "@/components/ProductPanel";
 import ProductRail from "@/components/ProductRail";
 import CustomerWords from "@/components/CustomerWords";
 import { getProductBySlug, getSettings, getAllProductSlugs, getFabricPrices, getReviews } from "@/lib/data";
-import { cardPrice, categoryTailoringCharge } from "@/lib/pricing";
+import { allowedFabricPrices, cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
@@ -60,6 +60,14 @@ export default async function ProductPage({
   const gallery = [...product.images].sort(
     (a, b) => Number(b.featured) - Number(a.featured) || a.order - b.order
   );
+
+  // Only the fabrics this product actually offers may price it, so "Starts
+  // from" is the cheapest fabric the customer can really pick.
+  const fabricGroup = product.customizations.find((pc) => pc.group.kind === "fabric");
+  const offeredFabrics = fabricGroup?.group.choices.map((c) => c.label) ?? [];
+  const prices = allowedFabricPrices(fabricPrices, offeredFabrics);
+  const yards = garmentYards(product.category.slug, settings);
+
   const view: ProductView = {
     id: product.id,
     slug: product.slug,
@@ -71,7 +79,8 @@ export default async function ProductPage({
     currency,
     categoryName: product.category.name,
     categorySlug: product.category.slug,
-    fabricPrices,
+    fabricPrices: prices,
+    yardsNeeded: yards,
     description: product.description || "",
     specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
     sizeChartUrl: product.sizeChartUrl,
@@ -149,8 +158,8 @@ export default async function ProductPage({
                 p.type,
                 p.priceTk,
                 categoryTailoringCharge(settings, product.category.slug),
-                product.category.slug,
-                fabricPrices
+                yards,
+                prices
               ),
               type: p.type,
               images: p.images.map((im) => ({ url: im.url, alt: im.alt })),

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { formatTk } from "@/lib/format";
-import { garmentYards, tailorFromPrice, tailorPrice } from "@/lib/pricing";
+import { tailorFromPrice, tailorPrice } from "@/lib/pricing";
 
 export type SizeOption = { label: string; stock: number };
 
@@ -18,8 +18,10 @@ export type ProductView = {
   currency: string;
   categoryName: string;
   categorySlug: string;
-  /** Fabric name → price per yard (from the Fabric Collection section). */
+  /** Fabric name → price per yard, limited to the fabrics this product offers. */
   fabricPrices: Record<string, number>;
+  /** Yards of cloth this garment needs (admin-set per collection). */
+  yardsNeeded: number;
   description: string;
   specs: { label: string; value: string }[];
   sizeChartUrl: string | null;
@@ -60,14 +62,14 @@ export default function ProductPanel({ product }: { product: ProductView }) {
 
   // Fabric-driven pricing (Tailor Made): total = tailoring charge + fabric price
   // per yard × the yards this garment needs. The admin sets no base price.
-  const yardsNeeded = garmentYards(product.categorySlug);
+  const yardsNeeded = product.yardsNeeded;
   const fabricGroup = product.customizations.find((c) => c.kind === "fabric");
   const selectedFabric = fabricGroup ? sel[fabricGroup.name] : "";
   const fabricYard = product.fabricPrices[selectedFabric] ?? 0;
   const showFabricPrice = isTailor && yardsNeeded > 0 && fabricYard > 0;
 
   // "Starts from" = tailoring + the cheapest fabric × yards this garment needs.
-  const fromPrice = tailorFromPrice(product.tailoringCharge, product.categorySlug, product.fabricPrices);
+  const fromPrice = tailorFromPrice(product.tailoringCharge, yardsNeeded, product.fabricPrices);
 
   // Ready-Made kurtas & shirts show their size chart inline, above Add to Cart.
   const inlineChart =
@@ -77,7 +79,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
 
   // Line price: Tailor Made = tailoring + selected fabric × yards; Ready Made = fixed.
   const unitPrice = isTailor
-    ? tailorPrice(product.tailoringCharge, product.categorySlug, fabricYard)
+    ? tailorPrice(product.tailoringCharge, yardsNeeded, fabricYard)
     : product.priceTk;
 
   const addToCart = () => {

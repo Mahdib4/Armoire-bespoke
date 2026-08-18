@@ -26,7 +26,15 @@ type ProductForm = {
   specs: Spec[];
   images: string[];
   featuredIndex: number;
-  customizationKinds: string[];
+  customizationGroupIds: string[];
+};
+
+type OptionGroup = {
+  id: string;
+  kind: string;
+  name: string;
+  categoryId: string | null;
+  choiceCount: number;
 };
 
 export default function ProductEditor({
@@ -36,7 +44,7 @@ export default function ProductEditor({
 }: {
   product: ProductForm;
   categories: { id: string; name: string }[];
-  groups: { kind: string; name: string }[];
+  groups: OptionGroup[];
 }) {
   const router = useRouter();
   const [f, setF] = useState<ProductForm>(product);
@@ -45,6 +53,11 @@ export default function ProductEditor({
   const upd = <K extends keyof ProductForm>(k: K, v: ProductForm[K]) => setF((p) => ({ ...p, [k]: v }));
 
   const isTailor = f.type === "CUSTOM";
+
+  // Options offered to this product: the ones scoped to its collection plus the
+  // all-collection ones. Following the category picker keeps the list correct
+  // when the product is moved to another collection.
+  const available = groups.filter((g) => g.categoryId === null || g.categoryId === f.categoryId);
 
   const moveImage = (i: number, dir: -1 | 1) => {
     const j = i + dir;
@@ -89,7 +102,11 @@ export default function ProductEditor({
           specs: f.specs.filter((s) => s.label.trim()),
           images: f.images,
           featuredIndex: f.featuredIndex,
-          customizationKinds: f.customizationKinds,
+          // Drop options belonging to another collection (e.g. after the
+          // product was moved) so they can't linger invisibly.
+          customizationGroupIds: f.customizationGroupIds.filter((id) =>
+            available.some((g) => g.id === id)
+          ),
         }),
       });
       if (!res.ok) throw new Error();
@@ -241,24 +258,41 @@ export default function ProductEditor({
       {isTailor && (
       <div className="adm-panel">
         <h3>Bespoke Options</h3>
-        <p className="adm-hint">Only the options you enable here appear on this product's Tailor-Made configurator.</p>
-        <div className="chip-row">
-          {groups.map((g) => {
-            const on = f.customizationKinds.includes(g.kind);
-            return (
-              <button
-                type="button"
-                key={g.kind}
-                className={`chip ${on ? "on" : ""}`}
-                onClick={() =>
-                  upd("customizationKinds", on ? f.customizationKinds.filter((k) => k !== g.kind) : [...f.customizationKinds, g.kind])
-                }
-              >
-                {g.name}
-              </button>
-            );
-          })}
-        </div>
+        <p className="adm-hint">
+          Only the options you enable here appear on this product&apos;s Tailor-Made configurator. Options for this
+          collection and all-collection options are listed. Add or edit options and their choices in{" "}
+          <strong>Bespoke Options</strong>.
+        </p>
+        {available.length === 0 ? (
+          <p className="adm-empty">
+            No options for this collection yet — add them in Bespoke Options.
+          </p>
+        ) : (
+          <div className="chip-row">
+            {available.map((g) => {
+              const on = f.customizationGroupIds.includes(g.id);
+              return (
+                <button
+                  type="button"
+                  key={g.id}
+                  className={`chip ${on ? "on" : ""}`}
+                  onClick={() =>
+                    upd(
+                      "customizationGroupIds",
+                      on
+                        ? f.customizationGroupIds.filter((x) => x !== g.id)
+                        : [...f.customizationGroupIds, g.id]
+                    )
+                  }
+                >
+                  {g.name}
+                  {g.categoryId === null && <em className="chip-scope">all</em>}
+                  {g.choiceCount === 0 && <em className="chip-scope warn">no choices</em>}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       )}
 

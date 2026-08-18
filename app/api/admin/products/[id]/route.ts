@@ -23,7 +23,9 @@ const Schema = z.object({
   specs: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
   images: z.array(z.string().min(1)).optional(),
   featuredIndex: z.number().int().min(0).optional(),
-  customizationKinds: z.array(z.string()).optional(),
+  // Option groups are linked by id: `kind` is no longer unique now that a
+  // collection can have its own fabric/style groups.
+  customizationGroupIds: z.array(z.string()).optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -68,15 +70,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       });
     }
 
-    if (d.customizationKinds) {
+    if (d.customizationGroupIds) {
+      // Drop ids that no longer exist so a stale form can't break the save.
       const groups = await tx.customizationGroup.findMany({
-        where: { kind: { in: d.customizationKinds } },
+        where: { id: { in: d.customizationGroupIds } },
+        select: { id: true },
       });
-      const byKind = new Map(groups.map((g) => [g.kind, g.id]));
+      const valid = new Set(groups.map((g) => g.id));
       await tx.productCustomization.deleteMany({ where: { productId: id } });
-      const rows = d.customizationKinds
-        .map((k, i) => ({ productId: id, groupId: byKind.get(k), order: i }))
-        .filter((r): r is { productId: string; groupId: string; order: number } => !!r.groupId);
+      const rows = d.customizationGroupIds
+        .filter((gid) => valid.has(gid))
+        .map((groupId, i) => ({ productId: id, groupId, order: i }));
       if (rows.length) await tx.productCustomization.createMany({ data: rows });
     }
   });

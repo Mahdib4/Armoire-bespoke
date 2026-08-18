@@ -7,6 +7,9 @@ export const runtime = "nodejs";
 
 const Schema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "IN_MAKING", "READY", "DELIVERED", "CANCELLED"]),
+  // The admin explicitly confirms the change before the customer is emailed,
+  // so the notification is opt-in per save rather than automatic.
+  notify: z.boolean().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,8 +24,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   await prisma.order.update({ where: { id }, data: { status: parsed.data.status } });
 
   // Email the customer their new delivery status (best-effort, non-fatal).
+  // Only when the status actually changed AND the admin asked for it.
   let emailed = false;
-  if (changed) {
+  if (changed && parsed.data.notify !== false) {
     try {
       const res = await sendOrderStatusEmail({
         publicId: order.publicId,

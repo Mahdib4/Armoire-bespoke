@@ -17,11 +17,14 @@ export default async function EditProductPage({
       where: { id },
       include: {
         images: { orderBy: { order: "asc" } },
-        customizations: { include: { group: true } },
+        customizations: { orderBy: { order: "asc" } },
       },
     }),
     prisma.category.findMany({ orderBy: { order: "asc" } }),
-    prisma.customizationGroup.findMany({ orderBy: { order: "asc" } }),
+    prisma.customizationGroup.findMany({
+      orderBy: { order: "asc" },
+      include: { _count: { select: { choices: true } } },
+    }),
   ]);
   if (!product) notFound();
 
@@ -57,10 +60,16 @@ export default async function EditProductPage({
           specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
           images: product.images.map((im) => im.url),
           featuredIndex: Math.max(0, product.images.findIndex((im) => im.featured)),
-          customizationKinds: product.customizations.map((c) => c.group.kind),
+          customizationGroupIds: product.customizations.map((c) => c.groupId),
         }}
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-        groups={groups.map((g) => ({ kind: g.kind, name: g.name }))}
+        groups={groups.map((g) => ({
+          id: g.id,
+          kind: g.kind,
+          name: g.name,
+          categoryId: g.categoryId,
+          choiceCount: g._count.choices,
+        }))}
       />
     </div>
   );

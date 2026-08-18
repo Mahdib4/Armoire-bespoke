@@ -1,6 +1,7 @@
 import "server-only";
 import nodemailer from "nodemailer";
 import { formatTk } from "./format";
+import { deliveryZoneLabel } from "./pricing";
 
 type OrderLine = {
   productName: string;
@@ -20,6 +21,8 @@ export type OrderEmailData = {
   city?: string | null;
   note?: string | null;
   subtotalTk: number;
+  deliveryTk?: number;
+  deliveryZone?: string | null;
   items: OrderLine[];
 };
 
@@ -87,9 +90,23 @@ function shell(title: string, intro: string, o: OrderEmailData): string {
         <div style="color:${GOLD};font-family:Georgia,serif;font-size:18px;margin-bottom:20px">${o.publicId}</div>
         <table style="width:100%;border-collapse:collapse">${lineRows(o.items)}
           <tr>
-            <td style="padding:16px 0 0;color:${IVORY};font-family:Georgia,serif;font-size:16px">Total</td>
-            <td style="padding:16px 0 0;text-align:right;color:${GOLD};font-family:Georgia,serif;font-size:18px">${formatTk(
+            <td style="padding:14px 0 0;color:#b8b2a6;font-family:Georgia,serif;font-size:14px">Subtotal</td>
+            <td style="padding:14px 0 0;text-align:right;color:#b8b2a6;font-family:Georgia,serif;font-size:14px">${formatTk(
               o.subtotalTk
+            )}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0 0;color:#b8b2a6;font-family:Georgia,serif;font-size:14px">Delivery${
+              o.deliveryZone ? ` <span style="color:#7d7870;font-size:12px">(${deliveryZoneLabel(o.deliveryZone)})</span>` : ""
+            }</td>
+            <td style="padding:6px 0 0;text-align:right;color:#b8b2a6;font-family:Georgia,serif;font-size:14px">${formatTk(
+              o.deliveryTk ?? 0
+            )}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 0 0;color:${IVORY};font-family:Georgia,serif;font-size:16px">Total</td>
+            <td style="padding:12px 0 0;text-align:right;color:${GOLD};font-family:Georgia,serif;font-size:18px">${formatTk(
+              o.subtotalTk + (o.deliveryTk ?? 0)
             )}</td>
           </tr>
         </table>
@@ -270,7 +287,11 @@ export async function sendOrderEmails(o: OrderEmailData): Promise<{ sent: boolea
 
   if (!t) {
     console.log("\n[email:preview] SMTP not configured — emails not sent.");
-    console.log(`[email:preview] -> customer <${o.email}> : Order ${o.publicId} (${formatTk(o.subtotalTk)})`);
+    console.log(
+      `[email:preview] -> customer <${o.email}> : Order ${o.publicId} (${formatTk(
+        o.subtotalTk + (o.deliveryTk ?? 0)
+      )} incl. delivery)`
+    );
     if (owner) console.log(`[email:preview] -> owner <${owner}> : New order ${o.publicId}`);
     return { sent: false };
   }

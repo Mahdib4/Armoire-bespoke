@@ -9,6 +9,7 @@ const FIELDS: {
   upload?: "image" | "video";
   textarea?: boolean;
   toggle?: boolean;
+  hint?: string;
 }[] = [
   { key: "brandName", label: "Brand Name" },
   { key: "brandShort", label: "Brand Short (wordmark)" },
@@ -23,6 +24,16 @@ const FIELDS: {
   { key: "inspirationHeroImg", label: "Inspiration Hero (image alt)", upload: "image" },
   { key: "inspirationHeroPoster", label: "Inspiration Hero Poster", upload: "image" },
   { key: "currency", label: "Currency Symbol" },
+  {
+    key: "deliveryInsideTk",
+    label: "Delivery Charge — Inside Dhaka (Tk)",
+    hint: "Added automatically at checkout. Leave blank for the default, Tk 70.",
+  },
+  {
+    key: "deliveryOutsideTk",
+    label: "Delivery Charge — Outside Dhaka (Tk)",
+    hint: "Added automatically at checkout. Leave blank for the default, Tk 130.",
+  },
   { key: "contactEmail", label: "Contact Email" },
   { key: "contactPhone", label: "Contact Phone" },
   { key: "whatsapp", label: "WhatsApp Number (with country code)" },
@@ -102,6 +113,7 @@ export default function SettingsEditor({ initial }: { initial: Record<string, st
                 )}
               </div>
             )}
+            {f.hint && <span className="adm-hint">{f.hint}</span>}
           </div>
         ))}
       </div>

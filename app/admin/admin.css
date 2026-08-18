@@ -178,6 +178,69 @@
 .adm-wa { color: #25d366 !important; font-weight: 500; }
 .adm-hint { color: var(--text-muted); font-size: 0.78rem; margin: -0.2rem 0 0.8rem; line-height: 1.5; }
 
+/* Orders: a status change is staged until the admin saves it, so nothing is
+   emailed to the customer by a mis-click. */
+.adm-status-save {
+  margin-top: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border: 1px solid var(--gold);
+  background: rgba(201, 168, 76, 0.06);
+  max-width: 220px;
+}
+.adm-status-btns { display: flex; gap: 0.35rem; }
+.adm-notify {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--cream);
+  cursor: pointer;
+}
+.adm-notify input { accent-color: var(--gold); }
+.adm-status-hint { font-size: 0.65rem; color: var(--text-muted); line-height: 1.4; }
+.adm-status-done { display: block; margin-top: 0.35rem; font-size: 0.68rem; color: var(--gold); }
+
+/* Orders: subtotal / delivery / total block in the expanded row */
+.adm-order-totals {
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 300px;
+  margin-left: auto;
+}
+.adm-order-totals div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.18rem 0; font-size: 0.76rem; color: var(--text-muted); }
+.adm-order-totals .tot { color: var(--ivory); font-size: 0.86rem; padding-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 0.3rem; }
+.adm-order-totals .tot .tk { color: var(--gold); }
+
+/* Bespoke Options */
+.adm-sublabel {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.chip-scope {
+  font-style: normal;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-left: 0.45rem;
+}
+.chip-scope.warn { color: var(--gold); opacity: 1; }
+.adm-group-scope {
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 1.4rem 0 -0.6rem;
+}
+
 /* Fabric swatch editor */
 .adm-swatches { display: flex; flex-direction: column; gap: 0.6rem; }
 .adm-swatch {
