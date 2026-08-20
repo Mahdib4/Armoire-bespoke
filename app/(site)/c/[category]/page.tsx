@@ -8,15 +8,9 @@ import {
   getCategoryBySlug,
   getSettings,
   getNavCategories,
-  getFabricPrices,
-  getCategoryFabricNames,
+  getCategoryFabricPrices,
 } from "@/lib/data";
-import {
-  allowedFabricPrices,
-  cardPrice,
-  categoryTailoringCharge,
-  garmentYards,
-} from "@/lib/pricing";
+import { cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
 
 export const revalidate = 120;
 
@@ -43,19 +37,17 @@ export default async function CategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category: slug } = await params;
-  const [cat, settings, fabricPrices, catFabrics] = await Promise.all([
+  const [cat, settings, prices] = await Promise.all([
     getCategoryBySlug(slug),
     getSettings(),
-    getFabricPrices(),
-    getCategoryFabricNames(slug),
+    getCategoryFabricPrices(slug),
   ]);
   if (!cat || !cat.active) notFound();
   const currency = settings.currency || "Tk";
   const isVideo = cat.bannerType === "video" && cat.bannerUrl;
 
   const tailoringCharge = categoryTailoringCharge(settings, slug);
-  // Price cards off the fabrics this collection actually offers.
-  const prices = allowedFabricPrices(fabricPrices, catFabrics);
+  // Cards price off the fabrics this collection actually offers.
   const yards = garmentYards(slug, settings);
   const toCard = (p: (typeof cat.products)[number]) => ({
     slug: p.slug,

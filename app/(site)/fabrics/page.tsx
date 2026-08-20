@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import FabricSwatches from "@/components/FabricSwatches";
 import GoldDust from "@/components/GoldDust";
-import { getFabrics, getSections } from "@/lib/data";
+import { getShowcaseFabrics, getSections } from "@/lib/data";
 
 export const revalidate = 120;
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function FabricsPage() {
-  const [fabrics, sections] = await Promise.all([getFabrics(), getSections()]);
+  const [fabrics, sections] = await Promise.all([getShowcaseFabrics(), getSections()]);
   const section = sections["fabric"];
 
   return (

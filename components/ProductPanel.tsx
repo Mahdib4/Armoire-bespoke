@@ -18,8 +18,8 @@ export type ProductView = {
   currency: string;
   categoryName: string;
   categorySlug: string;
-  /** Fabric name → price per yard, limited to the fabrics this product offers. */
-  fabricPrices: Record<string, number>;
+  /** Cloths this collection is offered in (Admin → Fabrics). */
+  fabricOptions: { name: string; price: number; image: string }[];
   /** Yards of cloth this garment needs (admin-set per collection). */
   yardsNeeded: number;
   description: string;
@@ -50,6 +50,9 @@ export default function ProductPanel({ product }: { product: ProductView }) {
   const [chartOpen, setChartOpen] = useState(false);
   const [showMeas, setShowMeas] = useState(false);
   const [refOpen, setRefOpen] = useState<string | null>(null);
+  // Fabric is picked from the collection's cloths; the rest are bespoke options.
+  const fabricOptions = product.fabricOptions;
+  const [fabric, setFabric] = useState(fabricOptions[0]?.name ?? "");
   const [sel, setSel] = useState<Record<string, string>>(
     Object.fromEntries(product.customizations.map((c) => [c.name, c.choices[0] ?? ""]))
   );
@@ -63,13 +66,13 @@ export default function ProductPanel({ product }: { product: ProductView }) {
   // Fabric-driven pricing (Tailor Made): total = tailoring charge + fabric price
   // per yard × the yards this garment needs. The admin sets no base price.
   const yardsNeeded = product.yardsNeeded;
-  const fabricGroup = product.customizations.find((c) => c.kind === "fabric");
-  const selectedFabric = fabricGroup ? sel[fabricGroup.name] : "";
-  const fabricYard = product.fabricPrices[selectedFabric] ?? 0;
+  const selectedFabric = fabric;
+  const fabricPrices = Object.fromEntries(fabricOptions.map((f) => [f.name, f.price]));
+  const fabricYard = fabricPrices[selectedFabric] ?? 0;
   const showFabricPrice = isTailor && yardsNeeded > 0 && fabricYard > 0;
 
   // "Starts from" = tailoring + the cheapest fabric × yards this garment needs.
-  const fromPrice = tailorFromPrice(product.tailoringCharge, yardsNeeded, product.fabricPrices);
+  const fromPrice = tailorFromPrice(product.tailoringCharge, yardsNeeded, fabricPrices);
 
   // Ready-Made kurtas & shirts show their size chart inline, above Add to Cart.
   const inlineChart =
@@ -84,7 +87,11 @@ export default function ProductPanel({ product }: { product: ProductView }) {
 
   const addToCart = () => {
     const selections = isTailor
-      ? { ...sel, ...(showSleeveCount ? { "Sleeve Buttons": sleeveButtons } : {}) }
+      ? {
+          ...(selectedFabric ? { Fabric: selectedFabric } : {}),
+          ...sel,
+          ...(showSleeveCount ? { "Sleeve Buttons": sleeveButtons } : {}),
+        }
       : { ...(product.colors.length ? { Colour: color } : {}), ...(product.sizeOptions.length ? { Size: size } : {}) };
     // Measurements: required-ish for Tailor Made, optional for Ready Made (minor alterations).
     const filledMeas = Object.fromEntries(Object.entries(meas).filter(([, v]) => v.trim()));
@@ -235,6 +242,25 @@ export default function ProductPanel({ product }: { product: ProductView }) {
             </div>
           )}
         </>
+      )}
+
+      {/* Tailor Made: fabric — the cloths this collection is offered in. */}
+      {isTailor && fabricOptions.length > 0 && (
+        <div className="ppanel-block">
+          <div className="ppanel-label">Fabric</div>
+          <div className="chip-row">
+            {fabricOptions.map((f) => (
+              <button
+                key={f.name}
+                className={`chip ${selectedFabric === f.name ? "on" : ""}`}
+                onClick={() => setFabric(f.name)}
+              >
+                {f.name}
+                {f.price > 0 && <em className="chip-price tk">{formatTk(f.price, product.currency)}/yd</em>}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* ===================== TAILOR MADE: bespoke options ===================== */}

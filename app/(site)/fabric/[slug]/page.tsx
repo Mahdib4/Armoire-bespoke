@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductGallery from "@/components/ProductGallery";
 import FabricPurchase from "@/components/FabricPurchase";
-import { getFabricBySlug, getFabrics, getSettings } from "@/lib/data";
+import { getFabricBySlug, getActiveFabrics, getSettings } from "@/lib/data";
 
 export const revalidate = 120;
 
 export async function generateStaticParams() {
-  const fabrics = await getFabrics();
+  const fabrics = await getActiveFabrics();
   return fabrics.map((f) => ({ slug: f.slug }));
 }
 

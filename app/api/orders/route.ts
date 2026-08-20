@@ -3,13 +3,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { sendAdminPush } from "@/lib/push";
-import { getCategoryFabricNames, getFabricPrices, getSettings } from "@/lib/data";
+import { getCategoryFabricPrices, getFabricPrices, getSettings } from "@/lib/data";
 import {
   tailorPrice,
   fabricFromSelections,
   categoryTailoringCharge,
   garmentYards,
-  allowedFabricPrices,
   deliveryCharge,
   isDeliveryZone,
 } from "@/lib/pricing";
@@ -72,9 +71,9 @@ export async function POST(req: Request) {
   // and yards needed. Each category may also offer only a subset of fabrics.
   const [fabricPrices, settings] = await Promise.all([getFabricPrices(), getSettings()]);
   const catSlugs = [...new Set(products.map((p) => p.category.slug))];
-  const catFabrics = new Map(
+  const catPrices = new Map(
     await Promise.all(
-      catSlugs.map(async (slug) => [slug, await getCategoryFabricNames(slug)] as const)
+      catSlugs.map(async (slug) => [slug, await getCategoryFabricPrices(slug)] as const)
     )
   );
 
@@ -106,7 +105,7 @@ export async function POST(req: Request) {
         unit = p.priceTk;
       } else {
         const slug = p.category.slug;
-        const prices = allowedFabricPrices(fabricPrices, catFabrics.get(slug));
+        const prices = catPrices.get(slug) ?? {};
         const fabricName = fabricFromSelections(it.selections, prices);
         const perYard = fabricName ? prices[fabricName] : 0;
         unit = tailorPrice(

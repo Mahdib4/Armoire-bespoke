@@ -215,6 +215,18 @@
 .adm-order-totals .tot { color: var(--ivory); font-size: 0.86rem; padding-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 0.3rem; }
 .adm-order-totals .tot .tk { color: var(--gold); }
 
+/* Fabrics: keep Save reachable in a long catalogue */
+.adm-sticky-save {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: rgba(10, 10, 10, 0.94);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+}
+
 /* Bespoke Options */
 .adm-sublabel {
   display: block;

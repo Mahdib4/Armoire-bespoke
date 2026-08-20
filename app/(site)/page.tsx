@@ -13,18 +13,20 @@ import {
   getSections,
   getLookbook,
   getReviews,
+  getShowcaseFabrics,
 } from "@/lib/data";
 
 export const revalidate = 120;
 
 export default async function HomePage() {
-  const [settings, categories, quotes, sections, looks, reviews] = await Promise.all([
+  const [settings, categories, quotes, sections, looks, reviews, showcaseFabrics] = await Promise.all([
     getSettings(),
     getHomeCategories(),
     getQuotes(),
     getSections(),
     getLookbook(),
     getReviews(),
+    getShowcaseFabrics(),
   ]);
 
   const storyImage =
@@ -52,7 +54,7 @@ export default async function HomePage() {
       <Lookbook section={sections["lookbook"]} looks={looks} />
       {q("after-lookbook") && <QuoteBand text={q("after-lookbook").text} background="var(--deep)" />}
 
-      <Fabric section={sections["fabric"]} />
+      <Fabric section={sections["fabric"]} swatches={showcaseFabrics} />
       {q("after-fabric") && <QuoteBand text={q("after-fabric").text} />}
 
       {categories.map((cat, i) => (

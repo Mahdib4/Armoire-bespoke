@@ -76,24 +76,14 @@ export function Lookbook({
   );
 }
 
-type Swatch = string | { name: string; image?: string; price?: number | string };
-
 export function Fabric({
   section,
+  swatches,
 }: {
   section?: Section;
+  /** Fabrics the admin ticked to show here (Admin → Fabrics). */
+  swatches: { name: string; image: string; price: number }[];
 }) {
-  let raw: Swatch[] = [];
-  try {
-    raw = section?.config ? JSON.parse(section.config).swatches ?? [] : [];
-  } catch {}
-  // Accept legacy string swatches and { name, image, price } objects.
-  // price = Tk per yard (0/blank hides the price line).
-  const swatches = raw.map((s) =>
-    typeof s === "string"
-      ? { name: s, image: "", price: 0 }
-      : { name: s.name, image: s.image || "", price: Number(s.price) || 0 }
-  );
   return (
     <section id="fabric" className="sec fabric-sec">
       <GoldDust className="fabric-dust" density={90} />

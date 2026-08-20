@@ -7,6 +7,7 @@ import { fabricYardsKey, tailoringChargeKey } from "@/lib/pricing";
 type Measurement = { label: string; unit: string; hint: string | null };
 export type CategoryForm = {
   id: string;
+  productCount: number;
   slug: string;
   name: string;
   tagline: string;
@@ -28,6 +29,24 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const upd = <K extends keyof CategoryForm>(k: K, v: CategoryForm[K]) => setF((p) => ({ ...p, [k]: v }));
+
+  const del = async () => {
+    if (f.productCount > 0) {
+      setMsg(`This collection still has ${f.productCount} product(s) \u2014 move or delete them first, or set it Hidden.`);
+      return;
+    }
+    if (!confirm(`Delete the "${f.name}" collection? This cannot be undone.`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/categories/${f.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Delete failed.");
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Delete failed.");
+      setBusy(false);
+    }
+  };
 
   const save = async () => {
     setBusy(true);
@@ -100,6 +119,13 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
             onChange={(e) => upd("fabricYards", Number(e.target.value))}
           />
           <span className="adm-hint">How much cloth this garment takes. Multiplied by the fabric&rsquo;s price per yard.</span>
+        </div>
+        <div className="adm-field wide">
+          <label>Fabrics &amp; Options</label>
+          <span className="adm-hint">
+            Choose which cloths this collection is offered in under <strong>Fabrics</strong> (tick this
+            collection on each fabric). Add style choices under <strong>Bespoke Options</strong>.
+          </span>
         </div>
         <div className="adm-field wide">
           <label>Tagline</label>
@@ -176,6 +202,11 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
       <div className="adm-actions" style={{ marginTop: "1.2rem" }}>
         <button className="adm-btn solid" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</button>
         {msg && <span className="adm-msg">{msg}</span>}
+        <span style={{ flex: 1 }} />
+        <span className="adm-hint" style={{ margin: 0 }}>
+          {f.productCount} product{f.productCount === 1 ? "" : "s"}
+        </span>
+        <button className="adm-btn sm danger" onClick={del} disabled={busy}>Delete</button>
       </div>
     </div>
   );

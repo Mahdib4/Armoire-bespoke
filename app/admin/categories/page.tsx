@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import CategoryEditor from "@/components/admin/CategoryEditor";
+import NewCategoryForm from "@/components/admin/NewCategoryForm";
 import { getSettings } from "@/lib/data";
 import { categoryTailoringCharge, garmentYards } from "@/lib/pricing";
 
@@ -9,7 +10,10 @@ export default async function AdminCategories() {
   const [cats, settings] = await Promise.all([
     prisma.category.findMany({
       orderBy: { order: "asc" },
-      include: { measurementFields: { orderBy: { order: "asc" } } },
+      include: {
+        measurementFields: { orderBy: { order: "asc" } },
+        _count: { select: { products: true } },
+      },
     }),
     getSettings(),
   ]);
@@ -19,14 +23,19 @@ export default async function AdminCategories() {
       <div className="adm-head">
         <div>
           <h1>Categories & Banners</h1>
-          <p>Edit each collection&apos;s banner (video or image), tagline, order and measurement fields.</p>
+          <p>
+            Add a collection, or edit each one&apos;s banner, tagline, tailoring charge, yards, order,
+            measurement fields and visibility.
+          </p>
         </div>
       </div>
+      <NewCategoryForm />
       {cats.map((c) => (
         <CategoryEditor
           key={c.id}
           category={{
             id: c.id,
+            productCount: c._count.products,
             slug: c.slug,
             name: c.name,
             tagline: c.tagline || "",

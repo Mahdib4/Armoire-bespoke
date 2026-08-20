@@ -5,9 +5,33 @@ import { slugify } from "./slug";
 
 export type Settings = Record<string, string>;
 
-export type Fabric = { name: string; slug: string; image: string; images: string[]; price: number };
+export type Fabric = {
+  name: string;
+  slug: string;
+  image: string;
+  images: string[];
+  price: number;
+  /** Category slugs this cloth is offered for. Empty = every collection. */
+  categories: string[];
+  /** Show it in the public Fabric Collection / fabric shop. */
+  show: boolean;
+  /** Off = not offered anywhere. */
+  active: boolean;
+};
 
-/** All fabrics from the Fabric Collection section, with slug + gallery images. */
+type RawSwatch = {
+  name?: string;
+  image?: string;
+  images?: string[];
+  price?: number | string;
+  categories?: string[];
+  show?: boolean;
+  active?: boolean;
+};
+
+/** Every fabric the admin has entered (Admin → Fabrics), including hidden ones.
+ *  Fabrics are stored in the "fabric" section's config so no migration is
+ *  needed; older entries without the newer fields stay valid. */
 export const getFabrics = cache(async (): Promise<Fabric[]> => {
   const section = await prisma.section.findUnique({ where: { key: "fabric" } });
   let raw: unknown[] = [];
@@ -16,22 +40,46 @@ export const getFabrics = cache(async (): Promise<Fabric[]> => {
   } catch {}
   return raw
     .map((s): Fabric => {
-      if (typeof s === "string") return { name: s, slug: slugify(s), image: "", images: [], price: 0 };
-      const o = s as { name?: string; image?: string; images?: string[]; price?: number | string };
-      const images = Array.isArray(o.images) ? o.images.filter(Boolean) : [];
+      if (typeof s === "string") {
+        return { name: s, slug: slugify(s), image: "", images: [], price: 0, categories: [], show: true, active: true };
+      }
+      const o = (s ?? {}) as RawSwatch;
       return {
         name: o.name || "",
         slug: slugify(o.name || ""),
         image: o.image || "",
-        images,
+        images: Array.isArray(o.images) ? o.images.filter(Boolean) : [],
         price: Number(o.price) || 0,
+        categories: Array.isArray(o.categories) ? o.categories.filter(Boolean) : [],
+        // Fabrics added before these fields existed stay visible and available.
+        show: o.show !== false,
+        active: o.active !== false,
       };
     })
     .filter((f) => f.name);
 });
 
+/** Fabrics the customer may actually be offered. */
+export const getActiveFabrics = cache(async (): Promise<Fabric[]> => {
+  return (await getFabrics()).filter((f) => f.active);
+});
+
+/** Fabrics shown in the public Fabric Collection section and fabric shop —
+ *  only the ones the admin ticked "show". */
+export const getShowcaseFabrics = cache(async (): Promise<Fabric[]> => {
+  return (await getActiveFabrics()).filter((f) => f.show);
+});
+
+/** Fabrics offered for one collection: blazer cloths differ from shirt cloths.
+ *  A fabric with no collections ticked is offered everywhere. */
+export const getCategoryFabrics = cache(async (categorySlug: string): Promise<Fabric[]> => {
+  return (await getActiveFabrics()).filter(
+    (f) => f.categories.length === 0 || f.categories.includes(categorySlug)
+  );
+});
+
 export const getFabricBySlug = cache(async (slug: string): Promise<Fabric | null> => {
-  const fabrics = await getFabrics();
+  const fabrics = await getActiveFabrics();
   return fabrics.find((f) => f.slug === slug) ?? null;
 });
 
@@ -91,34 +139,23 @@ export async function getSections() {
   return byKey;
 }
 
-/** Fabric name → price per yard (Tk), parsed from the Fabric Collection section.
- *  Single source of truth for fabric pricing across the site (PDP fabric selector). */
+/** Fabric name → price per yard (Tk) across every active fabric. Used to
+ *  validate fabric-by-the-yard order lines. */
 export const getFabricPrices = cache(async (): Promise<Record<string, number>> => {
-  const section = await prisma.section.findUnique({ where: { key: "fabric" } });
   const out: Record<string, number> = {};
-  try {
-    const swatches = JSON.parse(section?.config || "{}").swatches ?? [];
-    for (const s of swatches) {
-      if (s && typeof s === "object" && s.name && Number(s.price) > 0) out[s.name] = Number(s.price);
-    }
-  } catch {}
+  for (const f of await getActiveFabrics()) if (f.price > 0) out[f.name] = f.price;
   return out;
 });
 
-/** Fabric names a category offers, from the fabric option group scoped to it
- *  (Admin → Bespoke Options). Blazer fabrics can differ from shirt fabrics.
- *  An empty array means "not restricted" — every priced fabric is offered. */
-export const getCategoryFabricNames = cache(async (categorySlug: string): Promise<string[]> => {
-  try {
-    const group = await prisma.customizationGroup.findFirst({
-      where: { kind: "fabric", category: { slug: categorySlug } },
-      include: { choices: { orderBy: { order: "asc" } } },
-    });
-    return group ? group.choices.map((c) => c.label) : [];
-  } catch {
-    return [];
+/** Fabric name → price per yard for one collection. Single source of truth for
+ *  tailor-made pricing: the garment can only be priced from cloths it offers. */
+export const getCategoryFabricPrices = cache(
+  async (categorySlug: string): Promise<Record<string, number>> => {
+    const out: Record<string, number> = {};
+    for (const f of await getCategoryFabrics(categorySlug)) if (f.price > 0) out[f.name] = f.price;
+    return out;
   }
-});
+);
 
 export const getCategoryBySlug = cache(async (slug: string) => {
   return prisma.category.findUnique({

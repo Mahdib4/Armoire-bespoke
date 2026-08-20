@@ -31,29 +31,12 @@ export async function POST(req: Request) {
   }
   const base = slugify(d.kind || d.name) || "option";
 
-  // Fabric groups are per collection (blazer fabrics ≠ shirt fabrics), so the
-  // kind must stay exactly "fabric" — refuse a duplicate rather than silently
-  // renaming it to "fabric-2" and losing the pricing behaviour.
-  if (base === "fabric") {
-    const clash = await prisma.customizationGroup.findFirst({ where: { kind: "fabric", categoryId } });
-    if (clash) {
-      return NextResponse.json(
-        {
-          error: categoryId
-            ? "This collection already has a fabric group — edit that one instead."
-            : "There is already an all-collections fabric group — edit it, or scope this one to a collection.",
-        },
-        { status: 409 }
-      );
-    }
-  }
-
-  // Otherwise keep the key unique within the same scope by suffixing.
-  let kind = base;
-  if (base !== "fabric") {
-    for (let i = 2; await prisma.customizationGroup.findFirst({ where: { kind, categoryId } }); i++) {
-      kind = `${base}-${i}`;
-    }
+  // "fabric" is reserved: cloths are managed in Admin → Fabrics and offered
+  // automatically per collection, so an option literally named "Fabric" must
+  // not collide with it.
+  let kind = base === "fabric" ? "fabric-choice" : base;
+  for (let i = 2; await prisma.customizationGroup.findFirst({ where: { kind, categoryId } }); i++) {
+    kind = `${base}-${i}`;
   }
 
   const last = await prisma.customizationGroup.findFirst({ orderBy: { order: "desc" } });

@@ -1,11 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { getFabrics } from "@/lib/data";
 import OptionsManager from "@/components/admin/OptionsManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOptions() {
-  const [groups, categories, fabrics] = await Promise.all([
+  const [groups, categories] = await Promise.all([
     prisma.customizationGroup.findMany({
       orderBy: [{ categoryId: "asc" }, { order: "asc" }],
       include: {
@@ -14,7 +13,6 @@ export default async function AdminOptions() {
       },
     }),
     prisma.category.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } }),
-    getFabrics(),
   ]);
 
   return (
@@ -23,13 +21,15 @@ export default async function AdminOptions() {
         <div>
           <h1>Bespoke Options</h1>
           <p>
-            Everything a customer can choose on a tailor-made piece. Add options and choices freely, and set which
-            fabrics each collection is offered in. Enable them per product under Products → Bespoke Options.
+            Style choices a customer can make on a tailor-made piece — add options and their choices freely,
+            then enable them per product under Products → Bespoke Options. Fabrics are managed separately.
           </p>
         </div>
       </div>
       <OptionsManager
-        groups={groups.map((g) => ({
+        groups={groups
+          .filter((g) => g.kind !== "fabric") // cloths are managed in Admin → Fabrics
+          .map((g) => ({
           id: g.id,
           kind: g.kind,
           name: g.name,
@@ -40,7 +40,6 @@ export default async function AdminOptions() {
           productCount: g._count.products,
         }))}
         categories={categories}
-        fabrics={fabrics.map((f) => ({ name: f.name, price: f.price }))}
       />
     </div>
   );

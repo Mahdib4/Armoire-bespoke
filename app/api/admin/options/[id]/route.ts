@@ -29,20 +29,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const cat = await prisma.category.findUnique({ where: { id: d.categoryId }, select: { id: true } });
     if (!cat) return NextResponse.json({ error: "That collection no longer exists." }, { status: 400 });
   }
-  // Keep one fabric group per collection so pricing stays unambiguous.
-  if (existing.kind === "fabric" && d.categoryId !== undefined) {
-    const target = d.categoryId || null;
-    const clash = await prisma.customizationGroup.findFirst({
-      where: { kind: "fabric", categoryId: target, id: { not: id } },
-    });
-    if (clash) {
-      return NextResponse.json(
-        { error: "That collection already has a fabric group." },
-        { status: 409 }
-      );
-    }
-  }
-
   await prisma.$transaction(async (tx) => {
     await tx.customizationGroup.update({
       where: { id },

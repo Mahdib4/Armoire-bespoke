@@ -9,7 +9,8 @@ const Schema = z.object({
   title: z.string().max(160).nullable().optional(),
   subtitle: z.string().max(200).nullable().optional(),
   body: z.string().max(4000).nullable().optional(),
-  config: z.string().max(4000).nullable().optional(),
+  // Holds the fabric catalogue (names, prices, photo URLs), so it needs room.
+  config: z.string().max(200000).nullable().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ key: string }> }) {

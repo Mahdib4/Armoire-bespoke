@@ -5,8 +5,14 @@ import ProductGallery from "@/components/ProductGallery";
 import ProductPanel, { type ProductView } from "@/components/ProductPanel";
 import ProductRail from "@/components/ProductRail";
 import CustomerWords from "@/components/CustomerWords";
-import { getProductBySlug, getSettings, getAllProductSlugs, getFabricPrices, getReviews } from "@/lib/data";
-import { allowedFabricPrices, cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
+import {
+  getProductBySlug,
+  getSettings,
+  getAllProductSlugs,
+  getCategoryFabrics,
+  getReviews,
+} from "@/lib/data";
+import { cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
@@ -40,13 +46,17 @@ export default async function ProductPage({
   params: Promise<{ product: string }>;
 }) {
   const { product: slug } = await params;
-  const [product, settings, fabricPrices, reviews] = await Promise.all([
+  const [product, settings, reviews] = await Promise.all([
     getProductBySlug(slug),
     getSettings(),
-    getFabricPrices(),
     getReviews(),
   ]);
   if (!product || !product.active) notFound();
+
+  // Cloths offered for this collection (Admin → Fabrics). Blazer fabrics and
+  // shirt fabrics are separate, so pricing only ever uses what this garment
+  // can actually be made from.
+  const fabrics = await getCategoryFabrics(product.category.slug);
 
   const currency = settings.currency || "Tk";
   const isReady = product.type === "READYMADE";
@@ -61,11 +71,8 @@ export default async function ProductPage({
     (a, b) => Number(b.featured) - Number(a.featured) || a.order - b.order
   );
 
-  // Only the fabrics this product actually offers may price it, so "Starts
-  // from" is the cheapest fabric the customer can really pick.
-  const fabricGroup = product.customizations.find((pc) => pc.group.kind === "fabric");
-  const offeredFabrics = fabricGroup?.group.choices.map((c) => c.label) ?? [];
-  const prices = allowedFabricPrices(fabricPrices, offeredFabrics);
+  const fabricOptions = fabrics.map((f) => ({ name: f.name, price: f.price, image: f.image }));
+  const prices = Object.fromEntries(fabrics.filter((f) => f.price > 0).map((f) => [f.name, f.price]));
   const yards = garmentYards(product.category.slug, settings);
 
   const view: ProductView = {
@@ -79,7 +86,7 @@ export default async function ProductPage({
     currency,
     categoryName: product.category.name,
     categorySlug: product.category.slug,
-    fabricPrices: prices,
+    fabricOptions,
     yardsNeeded: yards,
     description: product.description || "",
     specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
@@ -96,7 +103,9 @@ export default async function ProductPage({
     measurements: product.category.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),
     customizations: isReady
       ? []
-      : product.customizations.map((pc) => ({
+      : product.customizations
+          .filter((pc) => pc.group.kind !== "fabric")
+          .map((pc) => ({
           kind: pc.group.kind,
           name: pc.group.name,
           referenceUrl: pc.group.referenceUrl,

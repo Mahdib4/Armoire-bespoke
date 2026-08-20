@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Uploader from "./Uploader";
-import { formatTk } from "@/lib/format";
 
 export type OptionGroup = {
   id: string;
@@ -15,24 +15,14 @@ export type OptionGroup = {
   productCount: number;
 };
 type Category = { id: string; name: string };
-type Fabric = { name: string; price: number };
 
-/** Editor for one option group. Fabric groups pick their choices from the
- *  priced Fabric Collection so tailor-made pricing stays correct. */
-function GroupCard({
-  group,
-  categories,
-  fabrics,
-}: {
-  group: OptionGroup;
-  categories: Category[];
-  fabrics: Fabric[];
-}) {
+/** Editor for one option group: its name, the collection it belongs to, and
+ *  the choices a customer picks from. */
+function GroupCard({ group, categories }: { group: OptionGroup; categories: Category[] }) {
   const router = useRouter();
   const [g, setG] = useState<OptionGroup>(group);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const isFabric = g.kind === "fabric";
 
   const upd = <K extends keyof OptionGroup>(k: K, v: OptionGroup[K]) => setG((p) => ({ ...p, [k]: v }));
 
@@ -72,16 +62,9 @@ function GroupCard({
     router.refresh();
   };
 
-  const toggleFabric = (name: string) => {
-    upd("choices", g.choices.includes(name) ? g.choices.filter((c) => c !== name) : [...g.choices, name]);
-  };
-
   return (
     <div className="adm-panel">
-      <h3>
-        {g.name}
-        {isFabric && <span className="adm-badge custom" style={{ marginLeft: "0.6rem" }}>FABRIC · PRICED</span>}
-      </h3>
+      <h3>{g.name}</h3>
 
       <div className="adm-form-grid">
         <div className="adm-field">
@@ -101,9 +84,7 @@ function GroupCard({
             ))}
           </select>
           <span className="adm-hint">
-            {isFabric
-              ? "Which collection these fabrics are offered for."
-              : "Limit this option to one collection, or leave it available to all."}
+            Limit this option to one collection, or leave it available to all.
           </span>
         </div>
         <div className="adm-field">
@@ -122,82 +103,45 @@ function GroupCard({
       {/* Choices */}
       <div style={{ marginTop: "1rem" }}>
         <label className="adm-sublabel">Choices</label>
-        {isFabric ? (
-          <>
-            <p className="adm-hint">
-              Tick the fabrics this collection is offered in. Prices come from the Fabric section and set the
-              garment&rsquo;s price.
-            </p>
-            {fabrics.length === 0 ? (
-              <p className="adm-empty">No fabrics yet — add them in Sections → Fabric Collection.</p>
-            ) : (
-              <div className="chip-row">
-                {fabrics.map((fb) => (
-                  <button
-                    type="button"
-                    key={fb.name}
-                    className={`chip ${g.choices.includes(fb.name) ? "on" : ""}`}
-                    onClick={() => toggleFabric(fb.name)}
-                  >
-                    {fb.name}
-                    <em style={{ fontStyle: "normal", opacity: 0.7, marginLeft: "0.4rem" }}>
-                      {fb.price > 0 ? `${formatTk(fb.price)}/yd` : "no price"}
-                    </em>
-                  </button>
-                ))}
-              </div>
-            )}
-            {g.choices.some((c) => !fabrics.find((fb) => fb.name === c)) && (
-              <p className="adm-hint" style={{ color: "var(--gold)" }}>
-                Some selected fabrics are no longer in the Fabric section:{" "}
-                {g.choices.filter((c) => !fabrics.find((fb) => fb.name === c)).join(", ")}. Untick them to keep
-                pricing correct.
-              </p>
-            )}
-          </>
-        ) : (
-          <>
-            <p className="adm-hint">
-              e.g. Single-Breasted, Double-Breasted. These appear as buttons the customer picks from.
-            </p>
-            {g.choices.map((c, i) => (
-              <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.45rem" }}>
-                <input
-                  value={c}
-                  placeholder="Choice label"
-                  onChange={(e) => {
-                    const cs = [...g.choices];
-                    cs[i] = e.target.value;
-                    upd("choices", cs);
-                  }}
-                  style={{ maxWidth: 320 }}
-                />
-                <button
-                  className="adm-btn sm"
-                  type="button"
-                  disabled={i === 0}
-                  onClick={() => {
-                    const cs = [...g.choices];
-                    [cs[i - 1], cs[i]] = [cs[i], cs[i - 1]];
-                    upd("choices", cs);
-                  }}
-                >
-                  ↑
-                </button>
-                <button
-                  className="adm-btn sm danger"
-                  type="button"
-                  onClick={() => upd("choices", g.choices.filter((_, x) => x !== i))}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <button className="adm-btn sm" type="button" onClick={() => upd("choices", [...g.choices, ""])}>
-              + Add Choice
+        <p className="adm-hint">
+          e.g. Single-Breasted, Double-Breasted. These appear as buttons the customer picks from.
+        </p>
+        {g.choices.map((c, i) => (
+          <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.45rem" }}>
+            <input
+              value={c}
+              placeholder="Choice label"
+              onChange={(e) => {
+                const cs = [...g.choices];
+                cs[i] = e.target.value;
+                upd("choices", cs);
+              }}
+              style={{ maxWidth: 320 }}
+            />
+            <button
+              className="adm-btn sm"
+              type="button"
+              disabled={i === 0}
+              onClick={() => {
+                const cs = [...g.choices];
+                [cs[i - 1], cs[i]] = [cs[i], cs[i - 1]];
+                upd("choices", cs);
+              }}
+            >
+              ↑
             </button>
-          </>
-        )}
+            <button
+              className="adm-btn sm danger"
+              type="button"
+              onClick={() => upd("choices", g.choices.filter((_, x) => x !== i))}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button className="adm-btn sm" type="button" onClick={() => upd("choices", [...g.choices, ""])}>
+          + Add Choice
+        </button>
       </div>
 
       <div className="adm-actions" style={{ marginTop: "1.2rem" }}>
@@ -220,16 +164,13 @@ function GroupCard({
 export default function OptionsManager({
   groups,
   categories,
-  fabrics,
 }: {
   groups: OptionGroup[];
   categories: Category[];
-  fabrics: Fabric[];
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [asFabric, setAsFabric] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -243,7 +184,6 @@ export default function OptionsManager({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          kind: asFabric ? "fabric" : undefined,
           categoryId: categoryId || null,
         }),
       });
@@ -251,7 +191,6 @@ export default function OptionsManager({
       if (!res.ok) throw new Error(data?.error || "Could not create the option.");
       setName("");
       setCategoryId("");
-      setAsFabric(false);
       router.refresh();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not create the option.");
@@ -270,7 +209,9 @@ export default function OptionsManager({
         <h3>Add an Option</h3>
         <p className="adm-hint">
           Create any specification you like — Breast Style, Lining, Monogram — then add its choices below.
-          Scope it to one collection or leave it available to all.
+          Scope it to one collection or leave it available to all. Fabrics are not set here: they live in{" "}
+          <Link href="/admin/fabrics" className="adm-link">Fabrics</Link>, and every tailor-made piece
+          automatically offers its collection&rsquo;s cloths.
         </p>
         <div className="adm-form-grid">
           <div className="adm-field">
@@ -291,20 +232,6 @@ export default function OptionsManager({
               ))}
             </select>
           </div>
-          <div className="adm-field">
-            <label>Option Type</label>
-            <div className="adm-toggle">
-              <button type="button" className={!asFabric ? "on" : ""} onClick={() => setAsFabric(false)}>
-                Style choices
-              </button>
-              <button type="button" className={asFabric ? "on" : ""} onClick={() => setAsFabric(true)}>
-                Fabric (priced)
-              </button>
-            </div>
-            <span className="adm-hint">
-              Fabric options are picked from the Fabric section and set the garment&rsquo;s price. One per collection.
-            </span>
-          </div>
         </div>
         <div className="adm-actions">
           <button className="adm-btn solid" onClick={create} disabled={busy || !name.trim()}>
@@ -319,7 +246,7 @@ export default function OptionsManager({
       {groups.map((g) => (
         <div key={g.id}>
           <div className="adm-group-scope">{scoped(g)}</div>
-          <GroupCard group={g} categories={categories} fabrics={fabrics} />
+          <GroupCard group={g} categories={categories} />
         </div>
       ))}
     </div>

@@ -57,7 +57,11 @@ export default function ProductEditor({
   // Options offered to this product: the ones scoped to its collection plus the
   // all-collection ones. Following the category picker keeps the list correct
   // when the product is moved to another collection.
-  const available = groups.filter((g) => g.categoryId === null || g.categoryId === f.categoryId);
+  // Fabric is offered automatically from the collection's cloths (Admin →
+  // Fabrics), so it is never a per-product toggle.
+  const available = groups.filter(
+    (g) => g.kind !== "fabric" && (g.categoryId === null || g.categoryId === f.categoryId)
+  );
 
   const moveImage = (i: number, dir: -1 | 1) => {
     const j = i + dir;
@@ -154,7 +158,7 @@ export default function ProductEditor({
               <span className="adm-hint">
                 Tailor-Made price is calculated automatically: the collection&rsquo;s tailoring charge + fabric price ×
                 yards the garment needs. Set the tailoring charge per collection in <strong>Categories &amp; Banners</strong>;
-                fabric prices in the <strong>Fabric</strong> section.
+                fabric prices and which collection each cloth belongs to in <strong>Fabrics</strong>.
               </span>
             </div>
           )}
@@ -261,7 +265,8 @@ export default function ProductEditor({
         <p className="adm-hint">
           Only the options you enable here appear on this product&apos;s Tailor-Made configurator. Options for this
           collection and all-collection options are listed. Add or edit options and their choices in{" "}
-          <strong>Bespoke Options</strong>.
+          <strong>Bespoke Options</strong>. Fabric is offered automatically from this collection&apos;s cloths,
+          set in <strong>Fabrics</strong>.
         </p>
         {available.length === 0 ? (
           <p className="adm-empty">

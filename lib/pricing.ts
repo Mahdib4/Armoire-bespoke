@@ -104,23 +104,6 @@ export function fabricFromSelections(
   return null;
 }
 
-/** Narrow a fabric price map to the fabrics a category actually offers.
- *  Fabrics are chosen per category in Admin → Bespoke Options; an empty
- *  allow-list means "no restriction" (every priced fabric is available). */
-export function allowedFabricPrices(
-  prices: Record<string, number>,
-  allowed: string[] | null | undefined
-): Record<string, number> {
-  if (!allowed || allowed.length === 0) return prices;
-  const out: Record<string, number> = {};
-  for (const name of allowed) {
-    if (prices[name] > 0) out[name] = prices[name];
-  }
-  // If the allow-list names nothing priced, fall back to the full map rather
-  // than pricing the garment at fabric-cost zero.
-  return Object.keys(out).length ? out : prices;
-}
-
 // ---------------------------------------------------------------------------
 // Delivery
 // ---------------------------------------------------------------------------

@@ -58,3 +58,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true });
 }
+
+/** Delete a collection. Refused while it still holds products, so a mis-click
+ *  can never cascade-delete a catalogue — hide it instead. */
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const category = await prisma.category.findUnique({
+    where: { id },
+    include: { _count: { select: { products: true } } },
+  });
+  if (!category) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (category._count.products > 0) {
+    return NextResponse.json(
+      {
+        error: `"${category.name}" still has ${category._count.products} product(s). Move or delete them first, or set the collection to Hidden.`,
+      },
+      { status: 409 }
+    );
+  }
+
+  await prisma.category.delete({ where: { id } });
+  revalidatePath("/", "layout");
+  return NextResponse.json({ ok: true });
+}
