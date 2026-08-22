@@ -31,6 +31,7 @@ export default async function AdminFabrics() {
           categories: f.categories,
           show: f.show,
           active: f.active,
+          isDefault: f.isDefault,
         }))}
         categories={categories}
       />

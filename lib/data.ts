@@ -17,6 +17,8 @@ export type Fabric = {
   show: boolean;
   /** Off = not offered anywhere. */
   active: boolean;
+  /** Pre-selected on the product page when this cloth is offered. */
+  isDefault: boolean;
 };
 
 type RawSwatch = {
@@ -27,6 +29,7 @@ type RawSwatch = {
   categories?: string[];
   show?: boolean;
   active?: boolean;
+  isDefault?: boolean;
 };
 
 /** Every fabric the admin has entered (Admin → Fabrics), including hidden ones.
@@ -41,7 +44,17 @@ export const getFabrics = cache(async (): Promise<Fabric[]> => {
   return raw
     .map((s): Fabric => {
       if (typeof s === "string") {
-        return { name: s, slug: slugify(s), image: "", images: [], price: 0, categories: [], show: true, active: true };
+        return {
+          name: s,
+          slug: slugify(s),
+          image: "",
+          images: [],
+          price: 0,
+          categories: [],
+          show: true,
+          active: true,
+          isDefault: false,
+        };
       }
       const o = (s ?? {}) as RawSwatch;
       return {
@@ -54,6 +67,7 @@ export const getFabrics = cache(async (): Promise<Fabric[]> => {
         // Fabrics added before these fields existed stay visible and available.
         show: o.show !== false,
         active: o.active !== false,
+        isDefault: o.isDefault === true,
       };
     })
     .filter((f) => f.name);

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Uploader from "./Uploader";
+import { optionMultiKey } from "@/lib/options";
 
 export type OptionGroup = {
   id: string;
@@ -12,6 +13,8 @@ export type OptionGroup = {
   referenceUrl: string;
   order: number;
   choices: string[];
+  /** true = the customer may pick several of these choices. */
+  multi: boolean;
   productCount: number;
 };
 type Category = { id: string; name: string };
@@ -30,17 +33,27 @@ function GroupCard({ group, categories }: { group: OptionGroup; categories: Cate
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch(`/api/admin/options/${g.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: g.name,
-          categoryId: g.categoryId,
-          referenceUrl: g.referenceUrl || null,
-          order: Number(g.order),
-          choices: g.choices.map((c) => c.trim()).filter(Boolean),
+      const [res] = await Promise.all([
+        fetch(`/api/admin/options/${g.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: g.name,
+            categoryId: g.categoryId,
+            referenceUrl: g.referenceUrl || null,
+            order: Number(g.order),
+            choices: g.choices.map((c) => c.trim()).filter(Boolean),
+          }),
         }),
-      });
+        // Single vs multiple lives in Site Settings so it needs no migration.
+        fetch("/api/admin/settings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            settings: [{ key: optionMultiKey(g.id), value: g.multi ? "1" : "0" }],
+          }),
+        }),
+      ]);
       if (!res.ok) throw new Error();
       setMsg("Saved.");
       router.refresh();
@@ -90,6 +103,21 @@ function GroupCard({ group, categories }: { group: OptionGroup; categories: Cate
         <div className="adm-field">
           <label>Display Order</label>
           <input type="number" value={g.order} onChange={(e) => upd("order", Number(e.target.value))} />
+        </div>
+        <div className="adm-field">
+          <label>How Many Can Be Chosen</label>
+          <div className="adm-toggle">
+            <button type="button" className={!g.multi ? "on" : ""} onClick={() => upd("multi", false)}>
+              One only
+            </button>
+            <button type="button" className={g.multi ? "on" : ""} onClick={() => upd("multi", true)}>
+              More than one
+            </button>
+          </div>
+          <span className="adm-hint">
+            &ldquo;More than one&rdquo; lets the customer tick several choices — e.g. a Vent Style with two
+            selections. They arrive on the order comma separated.
+          </span>
         </div>
         <div className="adm-field wide" style={{ flexDirection: "row", alignItems: "flex-end", gap: "0.6rem" }}>
           <div style={{ flex: 1 }}>

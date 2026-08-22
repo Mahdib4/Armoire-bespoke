@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { formatTk } from "@/lib/format";
 import { tailorFromPrice, tailorPrice } from "@/lib/pricing";
+import { joinChoices, splitChoices } from "@/lib/options";
 
 export type SizeOption = { label: string; stock: number };
 
@@ -20,6 +21,8 @@ export type ProductView = {
   categorySlug: string;
   /** Cloths this collection is offered in (Admin → Fabrics). */
   fabricOptions: { name: string; price: number; image: string }[];
+  /** Cloth pre-selected on load (admin-set default, else the first). */
+  defaultFabric: string;
   /** Yards of cloth this garment needs (admin-set per collection). */
   yardsNeeded: number;
   description: string;
@@ -30,7 +33,14 @@ export type ProductView = {
   tailoringNote: string;
   // Tailor Made
   measurements: { label: string; unit: string; hint: string | null }[];
-  customizations: { kind: string; name: string; referenceUrl: string | null; choices: string[] }[];
+  customizations: {
+    kind: string;
+    name: string;
+    referenceUrl: string | null;
+    /** true = the customer may pick several of these choices. */
+    multi: boolean;
+    choices: string[];
+  }[];
   // Ready Made
   colors: string[];
   sizeOptions: SizeOption[];
@@ -52,16 +62,30 @@ export default function ProductPanel({ product }: { product: ProductView }) {
   const [refOpen, setRefOpen] = useState<string | null>(null);
   // Fabric is picked from the collection's cloths; the rest are bespoke options.
   const fabricOptions = product.fabricOptions;
-  const [fabric, setFabric] = useState(fabricOptions[0]?.name ?? "");
+  const [fabric, setFabric] = useState(product.defaultFabric || fabricOptions[0]?.name || "");
   const [sel, setSel] = useState<Record<string, string>>(
     Object.fromEntries(product.customizations.map((c) => [c.name, c.choices[0] ?? ""]))
   );
   const [meas, setMeas] = useState<Record<string, string>>({});
   const [sleeveButtons, setSleeveButtons] = useState("2");
 
+  // A single-choice option holds one label; a multi-choice option holds them
+  // comma-separated in the same field, so carts and orders need no changes.
+  const isChosen = (name: string, multi: boolean, choice: string) =>
+    multi ? splitChoices(sel[name]).includes(choice) : sel[name] === choice;
+
+  const pick = (name: string, multi: boolean, choice: string) =>
+    setSel((p) => {
+      if (!multi) return { ...p, [name]: choice };
+      const cur = splitChoices(p[name]);
+      const next = cur.includes(choice) ? cur.filter((x) => x !== choice) : [...cur, choice];
+      return { ...p, [name]: joinChoices(next) };
+    });
+
   // Blazer cuff style: when "Sleeve Buttons" is chosen, reveal a 2/3/4/5 count picker.
   const cuffStyle = product.customizations.find((c) => c.kind === "cuff-style");
-  const showSleeveCount = !!cuffStyle && sel[cuffStyle.name] === "Sleeve Buttons";
+  const showSleeveCount =
+    !!cuffStyle && isChosen(cuffStyle.name, cuffStyle.multi, "Sleeve Buttons");
 
   // Fabric-driven pricing (Tailor Made): total = tailoring charge + fabric price
   // per yard × the yards this garment needs. The admin sets no base price.
@@ -93,6 +117,11 @@ export default function ProductPanel({ product }: { product: ProductView }) {
           ...(showSleeveCount ? { "Sleeve Buttons": sleeveButtons } : {}),
         }
       : { ...(product.colors.length ? { Colour: color } : {}), ...(product.sizeOptions.length ? { Size: size } : {}) };
+    // A multi-choice option can end up with nothing selected — don't carry
+    // empty values into the cart, emails or the order.
+    const filledSel = Object.fromEntries(
+      Object.entries(selections).filter(([, v]) => v && v.trim())
+    );
     // Measurements: required-ish for Tailor Made, optional for Ready Made (minor alterations).
     const filledMeas = Object.fromEntries(Object.entries(meas).filter(([, v]) => v.trim()));
     add({
@@ -104,7 +133,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
       qty,
       image: product.image,
       size: isTailor ? undefined : size,
-      selections,
+      selections: filledSel,
       measurements: Object.keys(filledMeas).length ? filledMeas : undefined,
     });
     setAdded(true);
@@ -269,6 +298,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
           <div className="ppanel-block" key={c.name}>
             <div className="ppanel-label">
               {c.name}
+              {c.multi && <span className="ppanel-hint">choose one or more</span>}
               {c.referenceUrl &&
                 /* Shirts: no style-reference lightbox on cuff & pocket (client request). */
                 !(product.categorySlug === "shirt" && (c.kind === "cuff" || c.kind === "pocket")) && (
@@ -284,8 +314,9 @@ export default function ProductPanel({ product }: { product: ProductView }) {
               {c.choices.map((ch) => (
                 <button
                   key={ch}
-                  className={`chip ${sel[c.name] === ch ? "on" : ""}`}
-                  onClick={() => setSel((p) => ({ ...p, [c.name]: ch }))}
+                  className={`chip ${isChosen(c.name, c.multi, ch) ? "on" : ""}`}
+                  aria-pressed={isChosen(c.name, c.multi, ch)}
+                  onClick={() => pick(c.name, c.multi, ch)}
                 >
                   {ch}
                 </button>
@@ -293,7 +324,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
             </div>
 
             {/* Cuff style → Sleeve Buttons reveals a number-of-buttons picker. */}
-            {c.kind === "cuff-style" && sel[c.name] === "Sleeve Buttons" && (
+            {c.kind === "cuff-style" && isChosen(c.name, c.multi, "Sleeve Buttons") && (
               <div className="ppanel-subopt">
                 <div className="ppanel-sublabel">Number of sleeve buttons</div>
                 <div className="radio-row">

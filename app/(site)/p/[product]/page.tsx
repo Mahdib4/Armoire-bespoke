@@ -13,6 +13,7 @@ import {
   getReviews,
 } from "@/lib/data";
 import { cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
+import { isOptionMulti } from "@/lib/options";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
@@ -72,6 +73,10 @@ export default async function ProductPage({
   );
 
   const fabricOptions = fabrics.map((f) => ({ name: f.name, price: f.price, image: f.image }));
+  // The cloth pre-selected on the page: the one the admin marked Default in
+  // Admin -> Fabrics, else simply the first offered.
+  const defaultFabric =
+    fabrics.find((f) => f.isDefault)?.name ?? fabrics[0]?.name ?? "";
   const prices = Object.fromEntries(fabrics.filter((f) => f.price > 0).map((f) => [f.name, f.price]));
   const yards = garmentYards(product.category.slug, settings);
 
@@ -87,6 +92,7 @@ export default async function ProductPage({
     categoryName: product.category.name,
     categorySlug: product.category.slug,
     fabricOptions,
+    defaultFabric,
     yardsNeeded: yards,
     description: product.description || "",
     specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
@@ -106,11 +112,13 @@ export default async function ProductPage({
       : product.customizations
           .filter((pc) => pc.group.kind !== "fabric")
           .map((pc) => ({
-          kind: pc.group.kind,
-          name: pc.group.name,
-          referenceUrl: pc.group.referenceUrl,
-          choices: pc.group.choices.map((c) => c.label),
-        })),
+            kind: pc.group.kind,
+            name: pc.group.name,
+            referenceUrl: pc.group.referenceUrl,
+            // Some options (e.g. Vent Style) let the customer pick several.
+            multi: isOptionMulti(settings, pc.groupId),
+            choices: pc.group.choices.map((c) => c.label),
+          })),
     colors: isReady ? parseJSON<string[]>(product.colors, []) : [],
     sizeOptions: isReady ? parseJSON<{ label: string; stock: number }[]>(product.sizeOptions, []) : [],
   };

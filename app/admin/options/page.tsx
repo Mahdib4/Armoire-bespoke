@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import OptionsManager from "@/components/admin/OptionsManager";
+import { getSettings } from "@/lib/data";
+import { isOptionMulti } from "@/lib/options";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOptions() {
-  const [groups, categories] = await Promise.all([
+  const [groups, categories, settings] = await Promise.all([
     prisma.customizationGroup.findMany({
       orderBy: [{ categoryId: "asc" }, { order: "asc" }],
       include: {
@@ -13,6 +15,7 @@ export default async function AdminOptions() {
       },
     }),
     prisma.category.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } }),
+    getSettings(),
   ]);
 
   return (
@@ -37,6 +40,7 @@ export default async function AdminOptions() {
           referenceUrl: g.referenceUrl || "",
           order: g.order,
           choices: g.choices.map((c) => c.label),
+          multi: isOptionMulti(settings, g.id),
           productCount: g._count.products,
         }))}
         categories={categories}

@@ -12,6 +12,7 @@ export type FabricRow = {
   categories: string[]; // category slugs; empty = every collection
   show: boolean;
   active: boolean;
+  isDefault: boolean;
 };
 type Category = { slug: string; name: string };
 
@@ -36,6 +37,9 @@ export default function FabricsManager({
     set(i, { categories: cur.includes(slug) ? cur.filter((c) => c !== slug) : [...cur, slug] });
   };
 
+  const makeDefault = (i: number) =>
+    setRows((list) => list.map((r, x) => ({ ...r, isDefault: x === i ? !r.isDefault : false })));
+
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= rows.length) return;
@@ -58,6 +62,7 @@ export default function FabricsManager({
           categories: r.categories,
           show: r.show,
           active: r.active,
+          isDefault: r.isDefault,
         }));
       const res = await fetch("/api/admin/sections/fabric", {
         method: "PATCH",
@@ -87,6 +92,7 @@ export default function FabricsManager({
         categories: filter ? [filter] : [],
         show: true,
         active: true,
+        isDefault: false,
       },
     ]);
 
@@ -165,6 +171,20 @@ export default function FabricsManager({
                 </button>
               </div>
               <span className="adm-hint">Hidden = not offered anywhere.</span>
+            </div>
+            <div className="adm-field">
+              <label>Default Choice</label>
+              <div className="adm-toggle">
+                <button type="button" className={r.isDefault ? "on" : ""} onClick={() => makeDefault(i)}>
+                  Default
+                </button>
+                <button type="button" className={!r.isDefault ? "on" : ""} onClick={() => set(i, { isDefault: false })}>
+                  Not default
+                </button>
+              </div>
+              <span className="adm-hint">
+                Pre-selected on every product that offers this cloth. Only one fabric can be the default.
+              </span>
             </div>
             <div className="adm-field">
               <label>Fabric Collection Section</label>
