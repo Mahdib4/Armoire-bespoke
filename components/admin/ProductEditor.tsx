@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
 import DeleteButton from "./DeleteButton";
+import SpecsEditor from "./SpecsEditor";
 
 type Spec = { label: string; value: string };
 type SizeOpt = { label: string; stock: number };
@@ -304,18 +305,11 @@ export default function ProductEditor({
       {/* Specs */}
       <div className="adm-panel">
         <h3>Specifications</h3>
-        {f.specs.map((s, i) => (
-          <div className="adm-form-grid" key={i} style={{ marginBottom: "0.6rem" }}>
-            <div className="adm-field">
-              <input placeholder="Label" value={s.label} onChange={(e) => { const specs = [...f.specs]; specs[i] = { ...specs[i], label: e.target.value }; upd("specs", specs); }} />
-            </div>
-            <div className="adm-field" style={{ flexDirection: "row", gap: "0.5rem" }}>
-              <input placeholder="Value" value={s.value} onChange={(e) => { const specs = [...f.specs]; specs[i] = { ...specs[i], value: e.target.value }; upd("specs", specs); }} />
-              <button className="adm-btn sm danger" type="button" onClick={() => upd("specs", f.specs.filter((_, x) => x !== i))}>✕</button>
-            </div>
-          </div>
-        ))}
-        <button className="adm-btn sm" type="button" onClick={() => upd("specs", [...f.specs, { label: "", value: "" }])}>+ Add Spec</button>
+        <p className="adm-hint">
+          Drag a row by its handle to reorder it — the numbers update themselves, and the product page shows
+          them in this exact order. On a touch screen use the arrows instead.
+        </p>
+        <SpecsEditor specs={f.specs} onChange={(specs) => upd("specs", specs)} />
       </div>
 
       <div className="adm-actions">
