@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
@@ -23,6 +23,8 @@ export type ProductView = {
   fabricOptions: { name: string; price: number; image: string }[];
   /** Cloth pre-selected on load (admin-set default, else the first). */
   defaultFabric: string;
+  /** Where the Fabric block sits among the bespoke blocks; -1 = hidden. */
+  fabricIndex: number;
   /** Yards of cloth this garment needs (admin-set per collection). */
   yardsNeeded: number;
   description: string;
@@ -139,6 +141,27 @@ export default function ProductPanel({ product }: { product: ProductView }) {
     setAdded(true);
     setTimeout(() => setAdded(false), 2600);
   };
+
+  // The cloths this collection is offered in. Rendered at the position the
+  // admin arranged, so it can sit above or below the style options.
+  const fabricBlock =
+    isTailor && fabricOptions.length > 0 ? (
+      <div className="ppanel-block">
+        <div className="ppanel-label">Fabric</div>
+        <div className="chip-row">
+          {fabricOptions.map((f) => (
+            <button
+              key={f.name}
+              className={`chip ${selectedFabric === f.name ? "on" : ""}`}
+              onClick={() => setFabric(f.name)}
+            >
+              {f.name}
+              {f.price > 0 && <em className="chip-price tk">{formatTk(f.price, product.currency)}/yd</em>}
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
 
   return (
     <div className="ppanel">
@@ -273,29 +296,13 @@ export default function ProductPanel({ product }: { product: ProductView }) {
         </>
       )}
 
-      {/* Tailor Made: fabric — the cloths this collection is offered in. */}
-      {isTailor && fabricOptions.length > 0 && (
-        <div className="ppanel-block">
-          <div className="ppanel-label">Fabric</div>
-          <div className="chip-row">
-            {fabricOptions.map((f) => (
-              <button
-                key={f.name}
-                className={`chip ${selectedFabric === f.name ? "on" : ""}`}
-                onClick={() => setFabric(f.name)}
-              >
-                {f.name}
-                {f.price > 0 && <em className="chip-price tk">{formatTk(f.price, product.currency)}/yd</em>}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ===================== TAILOR MADE: bespoke options ===================== */}
+      {/* ===================== TAILOR MADE: bespoke options =====================
+          Fabric sits wherever the admin dragged it (product.fabricIndex). */}
       {isTailor &&
-        product.customizations.map((c) => (
-          <div className="ppanel-block" key={c.name}>
+        product.customizations.map((c, blockIndex) => (
+          <Fragment key={c.name}>
+          {blockIndex === product.fabricIndex && fabricBlock}
+          <div className="ppanel-block">
             <div className="ppanel-label">
               {c.name}
               {c.multi && <span className="ppanel-hint">choose one or more</span>}
@@ -344,7 +351,9 @@ export default function ProductPanel({ product }: { product: ProductView }) {
               </div>
             )}
           </div>
+          </Fragment>
         ))}
+      {isTailor && product.fabricIndex >= product.customizations.length && fabricBlock}
 
       {/* Tailor Made: measurements */}
       {isTailor && product.measurements.length > 0 && (

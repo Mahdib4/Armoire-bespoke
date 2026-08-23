@@ -13,7 +13,12 @@ import {
   getReviews,
 } from "@/lib/data";
 import { cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
-import { isOptionMulti } from "@/lib/options";
+import {
+  FABRIC_BLOCK,
+  isOptionMulti,
+  optionLayoutKey,
+  parseOptionLayout,
+} from "@/lib/options";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 
@@ -80,6 +85,45 @@ export default async function ProductPage({
   const prices = Object.fromEntries(fabrics.filter((f) => f.price > 0).map((f) => [f.name, f.price]));
   const yards = garmentYards(product.category.slug, settings);
 
+  // Bespoke blocks in the order the admin arranged, skipping hidden ones.
+  // Fabric takes part in that order under a reserved id; with no saved layout
+  // the blocks keep their existing order with Fabric first.
+  const attached = product.customizations
+    .filter((pc) => pc.group.kind !== "fabric")
+    .map((pc) => ({
+      id: pc.groupId,
+      kind: pc.group.kind,
+      name: pc.group.name,
+      referenceUrl: pc.group.referenceUrl,
+      // Some options (e.g. Vent Style) let the customer pick several.
+      multi: isOptionMulti(settings, pc.groupId),
+      choices: pc.group.choices.map((c) => c.label),
+    }));
+
+  const layout = parseOptionLayout(settings[optionLayoutKey(product.id)]);
+  const byId = new Map(attached.map((a) => [a.id, a]));
+  const optionBlocks: typeof attached = [];
+  let fabricIndex = 0;
+  if (layout.length > 0) {
+    fabricIndex = -1;
+    for (const item of layout) {
+      if (!item.on) continue;
+      if (item.id === FABRIC_BLOCK) {
+        fabricIndex = optionBlocks.length;
+        continue;
+      }
+      const block = byId.get(item.id);
+      if (block) {
+        optionBlocks.push(block);
+        byId.delete(item.id);
+      }
+    }
+    // Anything attached but not in the layout yet (newly enabled) goes last.
+    for (const a of attached) if (byId.has(a.id)) optionBlocks.push(a);
+  } else {
+    optionBlocks.push(...attached);
+  }
+
   const view: ProductView = {
     id: product.id,
     slug: product.slug,
@@ -107,18 +151,8 @@ export default async function ProductPage({
     // inline; Ready-Made keeps them behind an optional, collapsed toggle (for minor
     // alterations, e.g. a ready-made kurta).
     measurements: product.category.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),
-    customizations: isReady
-      ? []
-      : product.customizations
-          .filter((pc) => pc.group.kind !== "fabric")
-          .map((pc) => ({
-            kind: pc.group.kind,
-            name: pc.group.name,
-            referenceUrl: pc.group.referenceUrl,
-            // Some options (e.g. Vent Style) let the customer pick several.
-            multi: isOptionMulti(settings, pc.groupId),
-            choices: pc.group.choices.map((c) => c.label),
-          })),
+    customizations: isReady ? [] : optionBlocks,
+    fabricIndex,
     colors: isReady ? parseJSON<string[]>(product.colors, []) : [],
     sizeOptions: isReady ? parseJSON<{ label: string; stock: number }[]>(product.sizeOptions, []) : [],
   };

@@ -36,3 +36,37 @@ export function splitChoices(value: string | undefined | null): string[] {
 export function joinChoices(choices: string[]): string {
   return choices.join(CHOICE_SEPARATOR);
 }
+
+// ---------------------------------------------------------------------------
+// Per-product option layout
+// ---------------------------------------------------------------------------
+// Which bespoke blocks a product shows, in which order, and which are hidden
+// for now. Kept in Site Settings so hiding an option keeps its position and no
+// database migration is needed. The Fabric block takes part in the ordering
+// under a reserved id.
+
+/** Reserved layout id for the automatic Fabric block. */
+export const FABRIC_BLOCK = "__fabric__";
+
+export type OptionLayoutItem = { id: string; on: boolean };
+
+export function optionLayoutKey(productId: string): string {
+  return `optionLayout:${productId}`;
+}
+
+export function parseOptionLayout(value: string | undefined | null): OptionLayoutItem[] {
+  if (!value) return [];
+  try {
+    const raw = JSON.parse(value);
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((r) => r && typeof r.id === "string" && r.id)
+      .map((r) => ({ id: r.id as string, on: r.on !== false }));
+  } catch {
+    return [];
+  }
+}
+
+export function serializeOptionLayout(items: OptionLayoutItem[]): string {
+  return JSON.stringify(items.map((i) => ({ id: i.id, on: i.on })));
+}

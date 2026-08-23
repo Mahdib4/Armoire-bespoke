@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { parseJSON } from "@/lib/format";
 import ProductEditor from "@/components/admin/ProductEditor";
+import { getSettings } from "@/lib/data";
+import { FABRIC_BLOCK, optionLayoutKey, parseOptionLayout } from "@/lib/options";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +14,7 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [product, categories, groups] = await Promise.all([
+  const [product, categories, groups, settings] = await Promise.all([
     prisma.product.findUnique({
       where: { id },
       include: {
@@ -23,10 +25,23 @@ export default async function EditProductPage({
     prisma.category.findMany({ orderBy: { order: "asc" } }),
     prisma.customizationGroup.findMany({
       orderBy: { order: "asc" },
-      include: { _count: { select: { choices: true } } },
+      include: { _count: { select: { choices: true } }, category: { select: { name: true } } },
     }),
+    getSettings(),
   ]);
   if (!product) notFound();
+
+  // The saved block order (Fabric included) with each block's Shown/Hidden
+  // state. Products saved before this existed fall back to their attached
+  // options in order, with Fabric first — exactly how they render today.
+  const saved = parseOptionLayout(settings[optionLayoutKey(product.id)]);
+  const optionRows =
+    saved.length > 0
+      ? saved.map((r) => ({ id: r.id, name: "", on: r.on }))
+      : [
+          { id: FABRIC_BLOCK, name: "Fabric", on: true },
+          ...product.customizations.map((c) => ({ id: c.groupId, name: "", on: true })),
+        ];
 
   return (
     <div>
@@ -60,7 +75,7 @@ export default async function EditProductPage({
           specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
           images: product.images.map((im) => im.url),
           featuredIndex: Math.max(0, product.images.findIndex((im) => im.featured)),
-          customizationGroupIds: product.customizations.map((c) => c.groupId),
+          optionRows,
         }}
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         groups={groups.map((g) => ({
@@ -68,6 +83,7 @@ export default async function EditProductPage({
           kind: g.kind,
           name: g.name,
           categoryId: g.categoryId,
+          categoryName: g.category?.name ?? null,
           choiceCount: g._count.choices,
         }))}
       />

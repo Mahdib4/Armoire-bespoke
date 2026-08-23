@@ -269,7 +269,13 @@
   font-family: inherit;
 }
 .spec-row input:focus { outline: none; border-color: var(--gold); }
-.spec-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+.spec-actions { display: flex; gap: 0.3rem; flex-shrink: 0; align-items: center; }
+
+/* Bespoke option order rows */
+.opt-row .opt-name { flex: 1; min-width: 0; font-size: 0.86rem; color: var(--ivory); }
+.opt-row.off { opacity: 0.5; }
+.opt-row.off .opt-name { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.25); }
+.opt-row .adm-toggle button { padding: 0.32rem 0.6rem; font-size: 0.62rem; }
 @media (max-width: 720px) {
   .spec-row { flex-wrap: wrap; }
   .spec-row .spec-label, .spec-row .spec-value { flex: 1 1 100%; }

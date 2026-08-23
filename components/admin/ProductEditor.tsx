@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
 import DeleteButton from "./DeleteButton";
 import SpecsEditor from "./SpecsEditor";
+import OptionOrderEditor, { type OptionRow } from "./OptionOrderEditor";
+import { FABRIC_BLOCK, optionLayoutKey, serializeOptionLayout } from "@/lib/options";
 
 type Spec = { label: string; value: string };
 type SizeOpt = { label: string; stock: number };
@@ -27,7 +29,8 @@ type ProductForm = {
   specs: Spec[];
   images: string[];
   featuredIndex: number;
-  customizationGroupIds: string[];
+  /** Ordered bespoke blocks with their Shown/Hidden state. */
+  optionRows: OptionRow[];
 };
 
 type OptionGroup = {
@@ -35,6 +38,7 @@ type OptionGroup = {
   kind: string;
   name: string;
   categoryId: string | null;
+  categoryName: string | null;
   choiceCount: number;
 };
 
@@ -56,13 +60,41 @@ export default function ProductEditor({
   const isTailor = f.type === "CUSTOM";
 
   // Options offered to this product: the ones scoped to its collection plus the
-  // all-collection ones. Following the category picker keeps the list correct
-  // when the product is moved to another collection.
-  // Fabric is offered automatically from the collection's cloths (Admin →
-  // Fabrics), so it is never a per-product toggle.
+  // all-collection ones. Fabric is built in (its cloths come from Admin →
+  // Fabrics) but still takes part in the ordering.
   const available = groups.filter(
     (g) => g.kind !== "fabric" && (g.categoryId === null || g.categoryId === f.categoryId)
   );
+
+  // Keep the saved order, drop anything the collection no longer offers, and
+  // append newly available options at the end (hidden until switched on).
+  const rows: OptionRow[] = (() => {
+    const allowed = new Map(available.map((g) => [g.id, g]));
+    const kept = f.optionRows.filter((r) => r.id === FABRIC_BLOCK || allowed.has(r.id));
+    const seen = new Set(kept.map((r) => r.id));
+    const out: OptionRow[] = kept.map((r) =>
+      r.id === FABRIC_BLOCK
+        ? { ...r, name: "Fabric", fixed: true }
+        : {
+            ...r,
+            name: allowed.get(r.id)!.name,
+            scope: allowed.get(r.id)!.categoryId === null ? "all collections" : undefined,
+            choiceCount: allowed.get(r.id)!.choiceCount,
+          }
+    );
+    if (!seen.has(FABRIC_BLOCK)) out.unshift({ id: FABRIC_BLOCK, name: "Fabric", on: true, fixed: true });
+    for (const g of available) {
+      if (seen.has(g.id)) continue;
+      out.push({
+        id: g.id,
+        name: g.name,
+        on: false,
+        scope: g.categoryId === null ? "all collections" : undefined,
+        choiceCount: g.choiceCount,
+      });
+    }
+    return out;
+  })();
 
   const moveImage = (i: number, dir: -1 | 1) => {
     const j = i + dir;
@@ -107,11 +139,24 @@ export default function ProductEditor({
           specs: f.specs.filter((s) => s.label.trim()),
           images: f.images,
           featuredIndex: f.featuredIndex,
-          // Drop options belonging to another collection (e.g. after the
-          // product was moved) so they can't linger invisibly.
-          customizationGroupIds: f.customizationGroupIds.filter((id) =>
-            available.some((g) => g.id === id)
-          ),
+          // Only the shown options are attached, in the order they appear.
+          customizationGroupIds: rows
+            .filter((r) => r.on && r.id !== FABRIC_BLOCK)
+            .map((r) => r.id),
+        }),
+      });
+      // The full layout (including Fabric's position and the hidden rows)
+      // lives in settings, so hiding an option keeps its place.
+      await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settings: [
+            {
+              key: optionLayoutKey(f.id),
+              value: serializeOptionLayout(rows.map((r) => ({ id: r.id, on: r.on }))),
+            },
+          ],
         }),
       });
       if (!res.ok) throw new Error();
@@ -264,41 +309,12 @@ export default function ProductEditor({
       <div className="adm-panel">
         <h3>Bespoke Options</h3>
         <p className="adm-hint">
-          Only the options you enable here appear on this product&apos;s Tailor-Made configurator. Options for this
-          collection and all-collection options are listed. Add or edit options and their choices in{" "}
-          <strong>Bespoke Options</strong>. Fabric is offered automatically from this collection&apos;s cloths,
-          set in <strong>Fabrics</strong>.
+          The choices shown on this product&apos;s page, in this order. Drag a row by its handle to move it, or
+          switch it to <strong>Hidden</strong> to take it off the page for now without losing its place. Only
+          options belonging to this collection are listed; add or edit them under <strong>Bespoke Options</strong>,
+          and the cloths behind Fabric under <strong>Fabrics</strong>.
         </p>
-        {available.length === 0 ? (
-          <p className="adm-empty">
-            No options for this collection yet — add them in Bespoke Options.
-          </p>
-        ) : (
-          <div className="chip-row">
-            {available.map((g) => {
-              const on = f.customizationGroupIds.includes(g.id);
-              return (
-                <button
-                  type="button"
-                  key={g.id}
-                  className={`chip ${on ? "on" : ""}`}
-                  onClick={() =>
-                    upd(
-                      "customizationGroupIds",
-                      on
-                        ? f.customizationGroupIds.filter((x) => x !== g.id)
-                        : [...f.customizationGroupIds, g.id]
-                    )
-                  }
-                >
-                  {g.name}
-                  {g.categoryId === null && <em className="chip-scope">all</em>}
-                  {g.choiceCount === 0 && <em className="chip-scope warn">no choices</em>}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <OptionOrderEditor rows={rows} onChange={(next) => upd("optionRows", next)} />
       </div>
       )}
 
