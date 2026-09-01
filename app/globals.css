@@ -511,13 +511,20 @@ html.lenis body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Auto margins on the first/last child centre the menu when it fits and let
+     it scroll from the top when it doesn't — plain `justify-content: center`
+     clips the first items off-screen on shorter phones. */
+  justify-content: flex-start;
   gap: 2.4rem;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.6s var(--ease), visibility 0.6s;
   overflow-x: clip;
-  padding: 1.5rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* Symmetric padding keeps the menu clear of the fixed header at the top. */
+  padding: clamp(5.5rem, 15vw, 7.5rem) 1.5rem;
 }
 .ab-overlay.show {
   opacity: 1;
@@ -528,11 +535,13 @@ html.lenis body {
   flex-direction: column;
   align-items: center;
   gap: clamp(0.5rem, 1.6vw, 1rem);
+  width: 100%;
+  margin-top: auto;
 }
 .ab-nav .mlink {
   position: relative;
   font-family: var(--font-cinzel), serif;
-  font-size: clamp(1.5rem, 4.4vw, 2.8rem);
+  font-size: clamp(1.35rem, 4.4vw, 2.8rem);
   letter-spacing: 0.06em;
   color: var(--ivory);
   text-decoration: none;
@@ -540,10 +549,17 @@ html.lenis body {
   transition: color 0.3s;
   display: inline-flex;
   align-items: baseline;
+  justify-content: center;
   gap: 0.9rem;
+  /* A long label (Discover Something New) wraps on narrower phones or when the
+     reader has larger text set — keep every line centred, not flush left. */
+  max-width: 100%;
+  text-align: center;
+  text-wrap: balance;
+  line-height: 1.2;
 }
 .ab-nav .mlink:hover { color: var(--gold); }
-.ab-overlay-foot { opacity: 0; }
+.ab-overlay-foot { opacity: 0; margin-bottom: auto; text-align: center; }
 
 @media (max-width: 640px) {
   .ab-slogan { font-size: 0.58rem; letter-spacing: 0.18em; white-space: nowrap; }
