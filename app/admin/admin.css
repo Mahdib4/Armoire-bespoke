@@ -353,3 +353,199 @@
   .adm-side-foot { flex-direction: row; border: none; padding-top: 0; }
   .adm-form-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- Sub-categories (inside a collection) ---------- */
+.adm-subs {
+  margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--border);
+}
+.adm-subs-head {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+.adm-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+.adm-sub-row input {
+  flex: 1;
+  min-width: 0;
+  background: #0b0b0b;
+  border: 1px solid var(--border);
+  color: var(--ivory);
+  padding: 0.45rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+.adm-sub-count {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.adm-sub-add {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+.adm-sub-add input {
+  flex: 1;
+  min-width: 0;
+  background: #0b0b0b;
+  border: 1px dashed var(--border);
+  color: var(--ivory);
+  padding: 0.45rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+.adm-toggle.sm button { padding: 0.3rem 0.6rem; font-size: 0.62rem; }
+
+/* ---------- Colour picker pairs ---------- */
+.adm-color { display: flex; gap: 0.5rem; align-items: center; }
+.adm-color input[type="color"] {
+  width: 42px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: #0b0b0b;
+  cursor: pointer;
+}
+.adm-color input:not([type="color"]) { flex: 1; min-width: 0; }
+
+/* ---------- Campaigns ---------- */
+.adm-newcamp {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.adm-coupon-sum {
+  margin-left: 0.8rem;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+.camp-items { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.2rem; }
+.camp-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  background: #0b0b0b;
+  flex-wrap: wrap;
+}
+.camp-item-move { display: flex; flex-direction: column; gap: 2px; }
+.camp-item-move button {
+  width: 22px;
+  height: 18px;
+  background: #141414;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+  font-size: 0.7rem;
+}
+.camp-item-move button:hover { color: var(--gold); border-color: var(--gold-dim); }
+.camp-item-name { flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 0.1rem; }
+.camp-item-name strong { font-size: 0.86rem; color: var(--ivory); font-weight: 500; }
+.camp-item-name small { color: var(--text-muted); font-size: 0.66rem; }
+.camp-item-disc { display: flex; gap: 0.4rem; }
+.camp-item-disc select { max-width: 170px; }
+.camp-item-disc input { width: 84px; }
+.camp-item-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.camp-item-badge input { accent-color: var(--gold); }
+
+.camp-picker { display: flex; gap: 0.6rem; align-items: center; margin-bottom: 0.7rem; }
+.camp-picker input {
+  flex: 1;
+  min-width: 0;
+  background: #0b0b0b;
+  border: 1px solid var(--border);
+  color: var(--ivory);
+  padding: 0.5rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+.camp-pick-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.4rem;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.camp-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem;
+  background: #0b0b0b;
+  border: 1px solid var(--border);
+  color: var(--ivory);
+  cursor: pointer;
+  text-align: left;
+}
+.camp-pick:hover { border-color: var(--gold-dim); }
+.camp-pick img, .camp-pick-noimg {
+  width: 34px;
+  height: 44px;
+  object-fit: cover;
+  background: #141414;
+  flex: 0 0 auto;
+}
+.camp-pick span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.camp-pick strong {
+  font-size: 0.78rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.camp-pick small { color: var(--text-muted); font-size: 0.64rem; }
+.camp-pick em { font-style: normal; color: var(--gold); font-size: 0.9rem; }
+
+/* ---------- Marquee editor ---------- */
+.adm-mq-preview {
+  border: 1px dashed var(--border);
+  margin-bottom: 0.9rem;
+}
+.adm-mq-img {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  background: #0b0b0b;
+  flex-wrap: wrap;
+}
+.adm-mq-img > img {
+  width: 60px;
+  height: 40px;
+  object-fit: contain;
+  background: #141414;
+}
+
+/* Sliders sit flush, not inside a text-field box. */
+.adm-field input[type="range"] {
+  padding: 0;
+  border: none;
+  background: none;
+  accent-color: var(--gold);
+}

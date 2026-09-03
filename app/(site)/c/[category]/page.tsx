@@ -2,15 +2,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import CategoryTabs from "@/components/CategoryTabs";
+import CollectionBrowser, { type BrowseProduct } from "@/components/CollectionBrowser";
 import LazyVideo from "@/components/LazyVideo";
 import {
   getCategoryBySlug,
   getSettings,
   getNavCategories,
   getCategoryFabricPrices,
+  getProductDiscounts,
 } from "@/lib/data";
 import { cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
+import { discountedPrice } from "@/lib/campaign";
 
 export const revalidate = 120;
 
@@ -37,10 +39,11 @@ export default async function CategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category: slug } = await params;
-  const [cat, settings, prices] = await Promise.all([
+  const [cat, settings, prices, discounts] = await Promise.all([
     getCategoryBySlug(slug),
     getSettings(),
     getCategoryFabricPrices(slug),
+    getProductDiscounts(),
   ]);
   if (!cat || !cat.active) notFound();
   const currency = settings.currency || "Tk";
@@ -49,14 +52,27 @@ export default async function CategoryPage({
   const tailoringCharge = categoryTailoringCharge(settings, slug);
   // Cards price off the fabrics this collection actually offers.
   const yards = garmentYards(slug, settings);
-  const toCard = (p: (typeof cat.products)[number]) => ({
-    slug: p.slug,
-    name: p.name,
+  // Sub-collections give the filter chips their names.
+  const subById = new Map(cat.subCategories.map((s) => [s.id, s.slug]));
+  const toCard = (p: (typeof cat.products)[number]): BrowseProduct => {
     // Tailor-Made shows a fabric-derived "starts from"; Ready-Made its fixed price.
-    priceTk: cardPrice(p.type, p.priceTk, tailoringCharge, yards, prices),
-    type: p.type,
-    images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
-  });
+    const base = cardPrice(p.type, p.priceTk, tailoringCharge, yards, prices);
+    const d = discounts.get(p.id);
+    const now = discountedPrice(base, d);
+    return {
+      slug: p.slug,
+      name: p.name,
+      priceTk: now,
+      wasTk: now < base ? base : 0,
+      badge: d?.showBadge ? d.label : "",
+      type: p.type,
+      images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
+      sub: (p.subCategoryId && subById.get(p.subCategoryId)) || "",
+      order: p.order,
+      createdAt: p.createdAt.toISOString(),
+      inStock: !p.outOfStock,
+    };
+  };
   const readyMade = cat.products.filter((p) => p.type === "READYMADE").map(toCard);
   const tailorMade = cat.products.filter((p) => p.type !== "READYMADE").map(toCard);
 
@@ -84,7 +100,12 @@ export default async function CategoryPage({
       </div>
 
       {cat.products.length > 0 ? (
-        <CategoryTabs readyMade={readyMade} tailorMade={tailorMade} currency={currency} />
+        <CollectionBrowser
+          readyMade={readyMade}
+          tailorMade={tailorMade}
+          subCategories={cat.subCategories.map((s) => ({ slug: s.slug, name: s.name }))}
+          currency={currency}
+        />
       ) : (
         <p className="clist-empty">
           New collections are on their way — check back soon for seasonal pieces, special events and

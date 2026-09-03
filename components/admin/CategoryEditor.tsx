@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
+import SubCategoriesEditor, { type SubCategoryRow } from "./SubCategoriesEditor";
 import { fabricYardsKey, tailoringChargeKey } from "@/lib/pricing";
 
 type Measurement = { label: string; unit: string; hint: string | null };
@@ -21,6 +22,7 @@ export type CategoryForm = {
   order: number;
   active: boolean;
   measurements: Measurement[];
+  subCategories: SubCategoryRow[];
 };
 
 export default function CategoryEditor({ category }: { category: CategoryForm }) {
@@ -177,6 +179,12 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
           <img src={f.sizeChartUrl} alt="Size chart" style={{ maxWidth: 220, border: "1px solid var(--border)" }} />
         )}
       </div>
+
+      <SubCategoriesEditor
+        categoryId={f.id}
+        categoryName={f.name}
+        subCategories={category.subCategories}
+      />
 
       <div style={{ marginTop: "1.2rem" }}>
         <label style={{ fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>

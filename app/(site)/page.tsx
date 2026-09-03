@@ -1,5 +1,7 @@
 import Hero from "@/components/Hero";
+import Marquee from "@/components/Marquee";
 import QuoteBand from "@/components/QuoteBand";
+import CampaignSection from "@/components/CampaignSection";
 import CategorySection from "@/components/CategorySection";
 import { Storytelling, Lookbook, Fabric } from "@/components/StorySections";
 import PriceChart from "@/components/PriceChart";
@@ -14,20 +16,90 @@ import {
   getLookbook,
   getReviews,
   getShowcaseFabrics,
+  getMarquee,
+  getLiveCampaigns,
+  getCategoryFabricPrices,
 } from "@/lib/data";
+import { cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
+import { defaultBadgeText, discountedPrice, isDiscountType } from "@/lib/campaign";
 
 export const revalidate = 120;
 
 export default async function HomePage() {
-  const [settings, categories, quotes, sections, looks, reviews, showcaseFabrics] = await Promise.all([
-    getSettings(),
-    getHomeCategories(),
-    getQuotes(),
-    getSections(),
-    getLookbook(),
-    getReviews(),
-    getShowcaseFabrics(),
-  ]);
+  const [settings, categories, quotes, sections, looks, reviews, showcaseFabrics, marquee, campaigns] =
+    await Promise.all([
+      getSettings(),
+      getHomeCategories(),
+      getQuotes(),
+      getSections(),
+      getLookbook(),
+      getReviews(),
+      getShowcaseFabrics(),
+      getMarquee(),
+      getLiveCampaigns(),
+    ]);
+
+  const currency = settings.currency || "Tk";
+
+  // Live campaigns the admin chose to feature on the homepage. Prices are the
+  // discounted ones, so the rail shows exactly what the product page will.
+  const homeCampaigns = await Promise.all(
+    campaigns
+      .filter((c) => c.showOnHome && c.items.length > 0)
+      .map(async (c) => {
+        const slugs = [...new Set(c.items.map((i) => i.product.category.slug))];
+        const priceMap = new Map(
+          await Promise.all(slugs.map(async (s) => [s, await getCategoryFabricPrices(s)] as const))
+        );
+        return {
+          slug: c.slug,
+          headline: c.headline || c.name,
+          subhead: c.subhead || "",
+          badge: c.badgeText || defaultBadgeText(
+            isDiscountType(c.discountType) ? c.discountType : "none",
+            c.discountValue
+          ),
+          accent: c.accent || "",
+          ctaLabel: c.ctaLabel || "",
+          ctaHref: c.ctaHref || "",
+          products: c.items
+            .filter((i) => i.product.active)
+            .map((i) => {
+              const p = i.product;
+              const catSlug = p.category.slug;
+              const base = cardPrice(
+                p.type,
+                p.priceTk,
+                categoryTailoringCharge(settings, catSlug),
+                garmentYards(catSlug, settings),
+                priceMap.get(catSlug) ?? {}
+              );
+              const type = isDiscountType(i.discountType) ? i.discountType : c.discountType;
+              const value = i.discountType ? (i.discountValue ?? 0) : c.discountValue;
+              const d = isDiscountType(type)
+                ? {
+                    type,
+                    value,
+                    label: i.badgeText || c.badgeText || defaultBadgeText(type, value),
+                    showBadge: c.showBadges && i.showBadge,
+                    campaignSlug: c.slug,
+                    campaignName: c.name,
+                  }
+                : null;
+              const now = discountedPrice(base, d);
+              return {
+                slug: p.slug,
+                name: p.name,
+                priceTk: now,
+                wasTk: now < base ? base : 0,
+                badge: d?.showBadge ? d.label : "",
+                type: p.type,
+                images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
+              };
+            }),
+        };
+      })
+  );
 
   const storyImage =
     categories.find((c) => c.slug === "blazer")?.products[0]?.images[0]?.url ||
@@ -48,8 +120,15 @@ export default async function HomePage() {
         />
       )}
 
+      {/* Announcement strip — content, styling and visibility all set in Admin → Marquee. */}
+      <Marquee config={marquee} />
+
       <Storytelling section={sections["storytelling"]} image={storyImage} />
       {q("after-storytelling") && <QuoteBand text={q("after-storytelling").text} />}
+
+      {homeCampaigns.map((c) => (
+        <CampaignSection key={c.slug} campaign={c} currency={currency} />
+      ))}
 
       <Lookbook section={sections["lookbook"]} looks={looks} />
       {q("after-lookbook") && <QuoteBand text={q("after-lookbook").text} background="var(--deep)" />}

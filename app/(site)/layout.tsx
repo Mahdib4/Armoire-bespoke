@@ -4,7 +4,8 @@ import Header, { type NavItem } from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdminBar from "@/components/AdminBar";
 import Loader from "@/components/Loader";
-import { getSettings, getNavCategories } from "@/lib/data";
+import CampaignPoster from "@/components/CampaignPoster";
+import { getSettings, getNavCategories, getPopupCampaign } from "@/lib/data";
 
 // Cache the shell (nav/settings) and regenerate periodically; admin edits also
 // trigger on-demand revalidation. No cookie reads here → pages stay cacheable.
@@ -15,7 +16,11 @@ export default async function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [settings, categories] = await Promise.all([getSettings(), getNavCategories()]);
+  const [settings, categories, poster] = await Promise.all([
+    getSettings(),
+    getNavCategories(),
+    getPopupCampaign(),
+  ]);
 
   // Menu: the product collections, then Fabrics (after Kurta) and Share Your Inspiration.
   const items: NavItem[] = categories.map((c) => ({ label: c.name, href: `/c/${c.slug}` }));
@@ -26,6 +31,8 @@ export default async function SiteLayout({
   return (
     <CartProvider>
       <Loader />
+      {/* Campaign poster — shown once per visit, after the opening animation. */}
+      {poster && <CampaignPoster poster={poster} />}
       <SmoothScroll>
         <Header
           logo={settings.logoDark || "/media/brand/logo-dark.png"}

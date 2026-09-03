@@ -12,6 +12,10 @@ export default async function AdminCategories() {
       orderBy: { order: "asc" },
       include: {
         measurementFields: { orderBy: { order: "asc" } },
+        subCategories: {
+          orderBy: { order: "asc" },
+          include: { _count: { select: { products: true } } },
+        },
         _count: { select: { products: true } },
       },
     }),
@@ -25,7 +29,7 @@ export default async function AdminCategories() {
           <h1>Categories & Banners</h1>
           <p>
             Add a collection, or edit each one&apos;s banner, tagline, tailoring charge, yards, order,
-            measurement fields and visibility.
+            sub-categories, measurement fields and visibility.
           </p>
         </div>
       </div>
@@ -49,6 +53,13 @@ export default async function AdminCategories() {
             order: c.order,
             active: c.active,
             measurements: c.measurementFields.map((m) => ({ label: m.label, unit: m.unit, hint: m.hint })),
+            subCategories: c.subCategories.map((s) => ({
+              id: s.id,
+              name: s.name,
+              slug: s.slug,
+              active: s.active,
+              productCount: s._count.products,
+            })),
           }}
         />
       ))}

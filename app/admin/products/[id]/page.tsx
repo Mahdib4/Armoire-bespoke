@@ -14,7 +14,7 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [product, categories, groups, settings] = await Promise.all([
+  const [product, categories, subCategories, groups, settings] = await Promise.all([
     prisma.product.findUnique({
       where: { id },
       include: {
@@ -23,6 +23,7 @@ export default async function EditProductPage({
       },
     }),
     prisma.category.findMany({ orderBy: { order: "asc" } }),
+    prisma.subCategory.findMany({ orderBy: { order: "asc" } }),
     prisma.customizationGroup.findMany({
       orderBy: { order: "asc" },
       include: { _count: { select: { choices: true } }, category: { select: { name: true } } },
@@ -60,6 +61,7 @@ export default async function EditProductPage({
           name: product.name,
           slug: product.slug,
           categoryId: product.categoryId,
+          subCategoryId: product.subCategoryId || "",
           type: product.type === "READYMADE" ? "READYMADE" : "CUSTOM",
           priceTk: product.priceTk,
           tailoringCharge: product.tailoringCharge,
@@ -78,6 +80,11 @@ export default async function EditProductPage({
           optionRows,
         }}
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        subCategories={subCategories.map((sc) => ({
+          id: sc.id,
+          name: sc.name,
+          categoryId: sc.categoryId,
+        }))}
         groups={groups.map((g) => ({
           id: g.id,
           kind: g.kind,

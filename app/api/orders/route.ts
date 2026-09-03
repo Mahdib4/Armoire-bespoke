@@ -3,16 +3,11 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { sendAdminPush } from "@/lib/push";
-import { getCategoryFabricPrices, getFabricPrices, getSettings } from "@/lib/data";
-import {
-  tailorPrice,
-  fabricFromSelections,
-  categoryTailoringCharge,
-  garmentYards,
-  deliveryCharge,
-  isDeliveryZone,
-} from "@/lib/pricing";
-import { formatTk, orderPublicId } from "@/lib/format";
+import { getSettings } from "@/lib/data";
+import { priceCart } from "@/lib/order-pricing";
+import { deliveryCharge, isDeliveryZone } from "@/lib/pricing";
+import { checkCoupon, normalizeCode, type CouponRules } from "@/lib/coupon";
+import { formatTk, orderPublicId, parseJSON } from "@/lib/format";
 
 export const runtime = "nodejs";
 
@@ -43,6 +38,7 @@ const OrderSchema = z.object({
     note: z.string().max(600).optional(),
   }),
   deliveryZone: z.enum(["inside-dhaka", "outside-dhaka"]).optional(),
+  couponCode: z.string().max(40).optional(),
   items: z.array(ItemSchema).min(1).max(30),
 });
 
@@ -60,71 +56,10 @@ export async function POST(req: Request) {
   }
   const { customer, items } = parsed.data;
 
-  // Re-price from DB (never trust client prices).
-  const products = await prisma.product.findMany({
-    where: { id: { in: items.filter((i) => !i.fabric).map((i) => i.productId) }, active: true },
-    include: { category: { select: { slug: true } } },
-  });
-  const byId = new Map(products.map((p) => [p.id, p]));
-  // Fabric prices (Fabric Collection section) drive both fabric-by-the-yard lines
-  // and Tailor-Made pricing. Settings hold each category's fixed tailoring charge
-  // and yards needed. Each category may also offer only a subset of fabrics.
-  const [fabricPrices, settings] = await Promise.all([getFabricPrices(), getSettings()]);
-  const catSlugs = [...new Set(products.map((p) => p.category.slug))];
-  const catPrices = new Map(
-    await Promise.all(
-      catSlugs.map(async (slug) => [slug, await getCategoryFabricPrices(slug)] as const)
-    )
-  );
-
-  const lineData = items
-    .map((it) => {
-      // Fabric line: price = price/yard × yards (validated server-side).
-      if (it.fabric) {
-        const perYard = fabricPrices[it.fabric.name] ?? 0;
-        if (perYard <= 0) return null;
-        const yards = it.fabric.yards;
-        const selections: Record<string, string> = { Yards: `${yards}` };
-        if (it.fabric.colorCode) selections["Colour code"] = it.fabric.colorCode;
-        return {
-          productId: null,
-          productName: `${it.fabric.name} — fabric (${yards} yd)`,
-          type: "FABRIC",
-          priceTk: Math.round(perYard * yards),
-          qty: it.qty,
-          selections: JSON.stringify(selections),
-          measurements: it.fabric.note ? JSON.stringify({ Note: it.fabric.note }) : null,
-        };
-      }
-      const p = byId.get(it.productId);
-      if (!p) return null;
-      // Ready Made = fixed price. Tailor Made = tailoring charge + the chosen
-      // fabric's price × the yards this garment needs (no admin base price).
-      let unit: number;
-      if (p.type === "READYMADE") {
-        unit = p.priceTk;
-      } else {
-        const slug = p.category.slug;
-        const prices = catPrices.get(slug) ?? {};
-        const fabricName = fabricFromSelections(it.selections, prices);
-        const perYard = fabricName ? prices[fabricName] : 0;
-        unit = tailorPrice(
-          categoryTailoringCharge(settings, slug),
-          garmentYards(slug, settings),
-          perYard
-        );
-      }
-      return {
-        productId: p.id,
-        productName: p.name,
-        type: p.type,
-        priceTk: unit,
-        qty: it.qty,
-        selections: it.selections ? JSON.stringify(it.selections) : null,
-        measurements: it.measurements ? JSON.stringify(it.measurements) : null,
-      };
-    })
-    .filter((x): x is NonNullable<typeof x> => x !== null);
+  // Re-price from the database — client prices are never trusted. This is the
+  // same routine the coupon preview uses, so the two always agree.
+  const [priced, settings] = await Promise.all([priceCart(items), getSettings()]);
+  const lineData = priced;
 
   if (lineData.length === 0) {
     return NextResponse.json({ error: "No valid products in order" }, { status: 400 });
@@ -135,6 +70,49 @@ export async function POST(req: Request) {
   // never from the client. Defaults: Tk 70 inside Dhaka, Tk 130 outside.
   const zone = isDeliveryZone(parsed.data.deliveryZone) ? parsed.data.deliveryZone : null;
   const delivery = deliveryCharge(settings, zone);
+
+  // Coupon: every rule is checked again here, against the prices worked out
+  // above, so a code can't be stretched by anything the browser sent.
+  const email = customer.email.trim().toLowerCase();
+  let discount = 0;
+  let couponCode: string | null = null;
+  let couponId: string | null = null;
+  if (parsed.data.couponCode) {
+    const code = normalizeCode(parsed.data.couponCode);
+    const coupon = await prisma.coupon.findUnique({ where: { code } }).catch(() => null);
+    if (coupon) {
+      const redeemed =
+        coupon.perEmailLimit > 0
+          ? await prisma.couponRedemption.count({ where: { couponId: coupon.id, email } })
+          : 0;
+      const rules: CouponRules = {
+        ...coupon,
+        type: coupon.type === "fixed" ? "fixed" : "percent",
+        appliesTo:
+          coupon.appliesTo === "READYMADE" || coupon.appliesTo === "CUSTOM" ? coupon.appliesTo : "all",
+        categoryIds: parseJSON<string[]>(coupon.categoryIds, []),
+      };
+      const check = checkCoupon(
+        rules,
+        lineData.map((l) => ({
+          type: l.type,
+          categoryId: l.categoryId,
+          priceTk: l.priceTk,
+          qty: l.qty,
+        })),
+        subtotal,
+        redeemed
+      );
+      // A code that no longer qualifies is simply dropped: the order still goes
+      // through at full price rather than failing at the last step.
+      if (check.ok) {
+        discount = check.discountTk;
+        couponCode = coupon.code;
+        couponId = coupon.id;
+      }
+    }
+  }
+
   const publicId = orderPublicId();
 
   const order = await prisma.order.create({
@@ -148,15 +126,49 @@ export async function POST(req: Request) {
       appointment: customer.appointment || null,
       note: customer.note || null,
       subtotalTk: subtotal,
+      couponCode,
+      discountTk: discount,
       deliveryZone: zone,
       deliveryTk: delivery,
       status: "PENDING",
-      items: { create: lineData },
+      // categoryId is only used to apply the coupon rules; it isn't a column.
+      items: {
+        create: lineData.map((l) => ({
+          productId: l.productId,
+          productName: l.productName,
+          type: l.type,
+          priceTk: l.priceTk,
+          qty: l.qty,
+          selections: l.selections,
+          measurements: l.measurements,
+        })),
+      },
     },
   });
 
+  // Record the redemption so usage and per-customer limits hold.
+  if (couponId && couponCode) {
+    try {
+      await prisma.$transaction([
+        prisma.coupon.update({ where: { id: couponId }, data: { usedCount: { increment: 1 } } }),
+        prisma.couponRedemption.create({
+          data: { couponId, email, orderId: order.id, amountTk: discount },
+        }),
+      ]);
+    } catch (e) {
+      console.error("[orders] coupon redemption failed:", e);
+    }
+  }
+
   // Decrement Ready-Made inventory by the ordered size. Tailor-Made pieces are
   // made-to-measure and hold no stock, so their orders never touch inventory.
+  const stocked = await prisma.product.findMany({
+    where: {
+      id: { in: lineData.map((l) => l.productId).filter((id): id is string => !!id) },
+      type: "READYMADE",
+    },
+  });
+  const byId = new Map(stocked.map((p) => [p.id, p]));
   for (const it of items) {
     const p = byId.get(it.productId);
     if (!p || p.type !== "READYMADE" || !p.sizeOptions) continue;
@@ -193,6 +205,8 @@ export async function POST(req: Request) {
       city: customer.city,
       note: customer.note,
       subtotalTk: subtotal,
+      discountTk: discount,
+      couponCode,
       deliveryTk: delivery,
       deliveryZone: zone,
       items: lineData.map((l) => ({
@@ -213,7 +227,7 @@ export async function POST(req: Request) {
   try {
     await sendAdminPush({
       title: "New order received",
-      body: `${customer.name} · ${formatTk(subtotal + delivery)} · ${lineData.length} item(s)`,
+      body: `${customer.name} · ${formatTk(subtotal - discount + delivery)} · ${lineData.length} item(s)`,
       url: "/admin/orders",
       tag: "order",
     });

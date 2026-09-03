@@ -21,10 +21,21 @@ export type OrderEmailData = {
   city?: string | null;
   note?: string | null;
   subtotalTk: number;
+  discountTk?: number;
+  couponCode?: string | null;
   deliveryTk?: number;
   deliveryZone?: string | null;
   items: OrderLine[];
 };
+
+/** Everything payable: items, less any coupon, plus delivery. */
+export function orderTotal(o: {
+  subtotalTk: number;
+  discountTk?: number;
+  deliveryTk?: number;
+}): number {
+  return o.subtotalTk - (o.discountTk ?? 0) + (o.deliveryTk ?? 0);
+}
 
 function transport() {
   const user = process.env.SMTP_USER;
@@ -95,6 +106,18 @@ function shell(title: string, intro: string, o: OrderEmailData): string {
               o.subtotalTk
             )}</td>
           </tr>
+          ${
+            (o.discountTk ?? 0) > 0
+              ? `<tr>
+            <td style="padding:6px 0 0;color:#b8b2a6;font-family:Georgia,serif;font-size:14px">Discount${
+              o.couponCode ? ` <span style="color:#7d7870;font-size:12px">(${o.couponCode})</span>` : ""
+            }</td>
+            <td style="padding:6px 0 0;text-align:right;color:${GOLD};font-family:Georgia,serif;font-size:14px">− ${formatTk(
+              o.discountTk ?? 0
+            )}</td>
+          </tr>`
+              : ""
+          }
           <tr>
             <td style="padding:6px 0 0;color:#b8b2a6;font-family:Georgia,serif;font-size:14px">Delivery${
               o.deliveryZone ? ` <span style="color:#7d7870;font-size:12px">(${deliveryZoneLabel(o.deliveryZone)})</span>` : ""
@@ -106,7 +129,7 @@ function shell(title: string, intro: string, o: OrderEmailData): string {
           <tr>
             <td style="padding:12px 0 0;color:${IVORY};font-family:Georgia,serif;font-size:16px">Total</td>
             <td style="padding:12px 0 0;text-align:right;color:${GOLD};font-family:Georgia,serif;font-size:18px">${formatTk(
-              o.subtotalTk + (o.deliveryTk ?? 0)
+              orderTotal(o)
             )}</td>
           </tr>
         </table>
@@ -289,7 +312,7 @@ export async function sendOrderEmails(o: OrderEmailData): Promise<{ sent: boolea
     console.log("\n[email:preview] SMTP not configured — emails not sent.");
     console.log(
       `[email:preview] -> customer <${o.email}> : Order ${o.publicId} (${formatTk(
-        o.subtotalTk + (o.deliveryTk ?? 0)
+        orderTotal(o)
       )} incl. delivery)`
     );
     if (owner) console.log(`[email:preview] -> owner <${owner}> : New order ${o.publicId}`);

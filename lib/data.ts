@@ -2,6 +2,15 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "./prisma";
 import { slugify } from "./slug";
+import {
+  defaultBadgeText,
+  isCampaignLive,
+  isDiscountType,
+  type ProductDiscount,
+} from "./campaign";
+import { MARQUEE_SECTION_KEY, parseMarquee, type MarqueeConfig } from "./marquee";
+import { cardPrice, categoryTailoringCharge, garmentYards } from "./pricing";
+import { discountedPrice } from "./campaign";
 
 export type Settings = Record<string, string>;
 
@@ -175,6 +184,8 @@ export const getCategoryBySlug = cache(async (slug: string) => {
   return prisma.category.findUnique({
     where: { slug },
     include: {
+      // Sub-collections (Blazer → Tuxedo, Suit Set …) drive the filter chips.
+      subCategories: { where: { active: true }, orderBy: { order: "asc" } },
       products: {
         where: { active: true },
         orderBy: { order: "asc" },
@@ -271,3 +282,199 @@ export const getReviews = cache(async (): Promise<ReviewView[]> => {
 export type HomeCategory = Awaited<ReturnType<typeof getHomeCategories>>[number];
 export type ProductFull = NonNullable<Awaited<ReturnType<typeof getProductBySlug>>>;
 export type CategoryFull = NonNullable<Awaited<ReturnType<typeof getCategoryBySlug>>>;
+
+// ---------------------------------------------------------------------------
+// Campaigns, discounts and the marquee
+// ---------------------------------------------------------------------------
+// Every read here is defensive: if the campaign tables aren't there yet (a
+// deploy that lands before the production SQL is run) the site simply behaves
+// as though no campaign exists, instead of failing to build.
+
+export type CampaignFull = NonNullable<Awaited<ReturnType<typeof getCampaignBySlug>>>;
+
+/** Campaigns that are switched on and inside their date window, in admin order. */
+export const getLiveCampaigns = cache(async () => {
+  try {
+    const rows = await prisma.campaign.findMany({
+      where: { active: true },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      include: {
+        items: {
+          orderBy: { order: "asc" },
+          include: {
+            product: {
+              include: {
+                category: { select: { slug: true, name: true } },
+                images: { orderBy: { order: "asc" }, take: 2 },
+              },
+            },
+          },
+        },
+      },
+    });
+    return rows.filter((c) => isCampaignLive(c));
+  } catch {
+    return [];
+  }
+});
+
+export const getCampaignBySlug = cache(async (slug: string) => {
+  try {
+    return await prisma.campaign.findUnique({
+      where: { slug },
+      include: {
+        items: {
+          orderBy: { order: "asc" },
+          include: {
+            product: {
+              include: {
+                category: { select: { slug: true, name: true } },
+                images: { orderBy: { order: "asc" }, take: 2 },
+              },
+            },
+          },
+        },
+      },
+    });
+  } catch {
+    return null;
+  }
+});
+
+export async function getCampaignSlugs() {
+  try {
+    return await prisma.campaign.findMany({ where: { active: true }, select: { slug: true } });
+  } catch {
+    return [];
+  }
+}
+
+/** The poster shown once after the intro animation — the first live campaign
+ *  the admin switched it on for. */
+export const getPopupCampaign = cache(async () => {
+  const live = await getLiveCampaigns();
+  const c = live.find((x) => x.popupShow);
+  if (!c) return null;
+  return {
+    id: c.id,
+    slug: c.slug,
+    title: c.popupTitle || c.headline || c.name,
+    body: c.popupBody || c.subhead || "",
+    image: c.popupImage || c.posterUrl || c.bannerUrl || "",
+    cta: c.popupCta || "View the campaign",
+    href: c.popupHref || `/campaign/${c.slug}`,
+    accent: c.accent || "",
+  };
+});
+
+/** productId → the best live discount for it, ready to price and label with.
+ *  A product in two campaigns keeps whichever takes more off. */
+export const getProductDiscounts = cache(async (): Promise<Map<string, ProductDiscount>> => {
+  const out = new Map<string, ProductDiscount>();
+  const live = await getLiveCampaigns();
+  for (const c of live) {
+    for (const item of c.items) {
+      const type = isDiscountType(item.discountType) ? item.discountType : c.discountType;
+      const value = item.discountType ? (item.discountValue ?? 0) : c.discountValue;
+      if (!isDiscountType(type) || type === "none" || value <= 0) continue;
+      const d: ProductDiscount = {
+        type,
+        value,
+        label: item.badgeText || c.badgeText || defaultBadgeText(type, value),
+        showBadge: c.showBadges && item.showBadge,
+        campaignSlug: c.slug,
+        campaignName: c.name,
+      };
+      const existing = out.get(item.productId);
+      // Percentages and flat amounts aren't directly comparable; compare what
+      // each would take off a nominal Tk 10,000 piece.
+      const worth = (x: ProductDiscount) => (x.type === "percent" ? x.value * 100 : x.value);
+      if (!existing || worth(d) > worth(existing)) out.set(item.productId, d);
+    }
+  }
+  return out;
+});
+
+/** The announcement strip's configuration (Admin → Marquee). */
+export const getMarquee = cache(async (): Promise<MarqueeConfig> => {
+  try {
+    const row = await prisma.section.findUnique({ where: { key: MARQUEE_SECTION_KEY } });
+    return parseMarquee(row?.config);
+  } catch {
+    return parseMarquee(null);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Search index
+// ---------------------------------------------------------------------------
+// The whole catalogue as one small payload. The browser fetches it once and
+// then matches locally, so suggestions appear from the first character typed
+// with no request per keystroke. Prices (including any live campaign discount)
+// are worked out here, server-side, so results show what the product page will.
+
+export type SearchDoc = {
+  slug: string;
+  name: string;
+  category: string;
+  categorySlug: string;
+  sub: string;
+  type: string;
+  priceTk: number;
+  /** Price before a campaign discount, 0 when nothing is discounted. */
+  wasTk: number;
+  badge: string;
+  image: string;
+  /** Extra words to match on (fabric, description, collection). */
+  terms: string;
+};
+
+export const getSearchIndex = cache(async (): Promise<SearchDoc[]> => {
+  const [products, settings, discounts] = await Promise.all([
+    prisma.product.findMany({
+      where: { active: true, category: { active: true } },
+      orderBy: [{ category: { order: "asc" } }, { order: "asc" }],
+      include: {
+        category: { select: { name: true, slug: true } },
+        subCategory: { select: { name: true } },
+        images: { orderBy: { order: "asc" }, take: 1 },
+      },
+    }),
+    getSettings(),
+    getProductDiscounts(),
+  ]);
+
+  // Fabric prices per collection drive the Tailor-Made "starts from" price.
+  const slugs = [...new Set(products.map((p) => p.category.slug))];
+  const priceMap = new Map(
+    await Promise.all(slugs.map(async (s) => [s, await getCategoryFabricPrices(s)] as const))
+  );
+
+  return products.map((p) => {
+    const slug = p.category.slug;
+    const base = cardPrice(
+      p.type,
+      p.priceTk,
+      categoryTailoringCharge(settings, slug),
+      garmentYards(slug, settings),
+      priceMap.get(slug) ?? {}
+    );
+    const d = discounts.get(p.id);
+    const now = discountedPrice(base, d);
+    return {
+      slug: p.slug,
+      name: p.name,
+      category: p.category.name,
+      categorySlug: slug,
+      sub: p.subCategory?.name ?? "",
+      type: p.type,
+      priceTk: now,
+      wasTk: now < base ? base : 0,
+      badge: d?.showBadge ? d.label : "",
+      image: p.images[0]?.url ?? "",
+      terms: [p.fabric ?? "", p.description ?? "", p.category.name, p.subCategory?.name ?? ""]
+        .join(" ")
+        .slice(0, 400),
+    };
+  });
+});

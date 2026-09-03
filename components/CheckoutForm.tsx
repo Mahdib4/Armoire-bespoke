@@ -29,10 +29,61 @@ export default function CheckoutForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Coupon: checked by the server against the real bag. What is applied here is
+  // only a preview — the order API runs the same rules again when the order is
+  // placed, so the amount charged is always the server's.
+  const [codeInput, setCodeInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discountTk: number; message: string } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [checkingCode, setCheckingCode] = useState(false);
+
   // Delivery is added automatically from the chosen area. The server recomputes
   // it from the same settings, so this is only ever a preview of the charge.
   const deliveryTk = deliveryRates[zone] ?? 0;
-  const total = subtotal + deliveryTk;
+  const discountTk = coupon ? Math.min(coupon.discountTk, subtotal) : 0;
+  const total = subtotal - discountTk + deliveryTk;
+
+  const cartPayload = () =>
+    items.map((i) => ({
+      productId: i.productId,
+      qty: i.qty,
+      size: i.size,
+      selections: i.selections,
+      measurements: i.measurements,
+      fabric:
+        i.type === "FABRIC"
+          ? { name: i.name, yards: i.yards, colorCode: i.colorCode, note: i.note }
+          : undefined,
+    }));
+
+  const applyCoupon = async () => {
+    const code = codeInput.trim();
+    if (!code) return;
+    setCheckingCode(true);
+    setCouponError(null);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, email: form.email, items: cartPayload() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "That code can't be used.");
+      setCoupon({ code: data.code, discountTk: data.discountTk, message: data.message });
+      setCodeInput(data.code);
+    } catch (err) {
+      setCoupon(null);
+      setCouponError(err instanceof Error ? err.message : "That code can't be used.");
+    } finally {
+      setCheckingCode(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    setCouponError(null);
+    setCodeInput("");
+  };
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -52,17 +103,8 @@ export default function CheckoutForm({
         body: JSON.stringify({
           customer: form,
           deliveryZone: zone,
-          items: items.map((i) => ({
-            productId: i.productId,
-            qty: i.qty,
-            size: i.size,
-            selections: i.selections,
-            measurements: i.measurements,
-            fabric:
-              i.type === "FABRIC"
-                ? { name: i.name, yards: i.yards, colorCode: i.colorCode, note: i.note }
-                : undefined,
-          })),
+          couponCode: coupon?.code,
+          items: cartPayload(),
         }),
       });
       const data = await res.json();
@@ -190,10 +232,52 @@ export default function CheckoutForm({
               <span className="tk">{formatTk(it.priceTk * it.qty)}</span>
             </div>
           ))}
+          {/* Discount code */}
+          <div className="cosum-coupon">
+            {coupon ? (
+              <div className="cosum-coupon-on">
+                <span>
+                  Code <strong>{coupon.code}</strong> applied
+                </span>
+                <button type="button" onClick={removeCoupon}>
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="cosum-coupon-row">
+                <input
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      applyCoupon();
+                    }
+                  }}
+                  placeholder="Discount code"
+                  aria-label="Discount code"
+                  autoComplete="off"
+                />
+                <button type="button" onClick={applyCoupon} disabled={checkingCode || !codeInput.trim()}>
+                  {checkingCode ? "Checking…" : "Apply"}
+                </button>
+              </div>
+            )}
+            {couponError && <p className="cosum-coupon-err">{couponError}</p>}
+          </div>
+
           <div className="cart-sum-row">
             <span>Subtotal</span>
             <span className="tk">{formatTk(subtotal)}</span>
           </div>
+          {discountTk > 0 && (
+            <div className="cart-sum-row">
+              <span>
+                Discount <em className="cosum-zone">{coupon?.code}</em>
+              </span>
+              <span className="tk cosum-off">− {formatTk(discountTk)}</span>
+            </div>
+          )}
           <div className="cart-sum-row">
             <span>
               Delivery <em className="cosum-zone">{DELIVERY_ZONES.find((z) => z.value === zone)?.label}</em>

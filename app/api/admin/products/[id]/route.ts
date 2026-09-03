@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 const Schema = z.object({
   name: z.string().min(1).max(160).optional(),
   categoryId: z.string().optional(),
+  subCategoryId: z.string().nullable().optional(),
   type: z.enum(["CUSTOM", "READYMADE"]).optional(),
   priceTk: z.number().int().min(0).optional(),
   tailoringCharge: z.number().int().min(0).optional(),
@@ -40,12 +41,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // A sub-category only counts if it belongs to the collection the product is
+  // in — moving a product to another collection clears a stale one.
+  let subCategoryId: string | null | undefined = d.subCategoryId;
+  if (subCategoryId) {
+    const sub = await prisma.subCategory.findUnique({ where: { id: subCategoryId } });
+    if (!sub || sub.categoryId !== (d.categoryId ?? existing.categoryId)) subCategoryId = null;
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.product.update({
       where: { id },
       data: {
         name: d.name,
         categoryId: d.categoryId,
+        subCategoryId,
         type: d.type,
         priceTk: d.priceTk,
         tailoringCharge: d.tailoringCharge,

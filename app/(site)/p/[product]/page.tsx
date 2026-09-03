@@ -11,8 +11,10 @@ import {
   getAllProductSlugs,
   getCategoryFabrics,
   getReviews,
+  getProductDiscounts,
 } from "@/lib/data";
 import { cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
+import { discountedPrice } from "@/lib/campaign";
 import {
   FABRIC_BLOCK,
   isOptionMulti,
@@ -52,10 +54,11 @@ export default async function ProductPage({
   params: Promise<{ product: string }>;
 }) {
   const { product: slug } = await params;
-  const [product, settings, reviews] = await Promise.all([
+  const [product, settings, reviews, discounts] = await Promise.all([
     getProductBySlug(slug),
     getSettings(),
     getReviews(),
+    getProductDiscounts(),
   ]);
   if (!product || !product.active) notFound();
 
@@ -138,6 +141,9 @@ export default async function ProductPage({
     fabricOptions,
     defaultFabric,
     yardsNeeded: yards,
+    // A live campaign discount, applied to whatever the configured price works
+    // out to (and applied again server-side when the order is placed).
+    discount: discounts.get(product.id) ?? null,
     description: product.description || "",
     specs: parseJSON<{ label: string; value: string }[]>(product.specs, []),
     sizeChartUrl: product.sizeChartUrl,
@@ -201,20 +207,27 @@ export default async function ProductPage({
             <div className="rule" />
           </div>
           <ProductRail
-            products={related.map((p) => ({
-              slug: p.slug,
-              name: p.name,
+            products={related.map((p) => {
               // Related items share this product's category — same slug + tailoring charge.
-              priceTk: cardPrice(
+              const base = cardPrice(
                 p.type,
                 p.priceTk,
                 categoryTailoringCharge(settings, product.category.slug),
                 yards,
                 prices
-              ),
-              type: p.type,
-              images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
-            }))}
+              );
+              const d = discounts.get(p.id);
+              const now = discountedPrice(base, d);
+              return {
+                slug: p.slug,
+                name: p.name,
+                priceTk: now,
+                wasTk: now < base ? base : 0,
+                badge: d?.showBadge ? d.label : "",
+                type: p.type,
+                images: p.images.map((im) => ({ url: im.url, alt: im.alt })),
+              };
+            })}
             currency={currency}
           />
         </section>

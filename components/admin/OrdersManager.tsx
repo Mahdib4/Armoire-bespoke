@@ -23,6 +23,8 @@ type Order = {
   city: string | null;
   note: string | null;
   subtotalTk: number;
+  discountTk: number;
+  couponCode: string | null;
   deliveryTk: number;
   deliveryZone: string | null;
   status: string;
@@ -125,7 +127,7 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
                 <td><button className="adm-link" style={{ background: "none", border: "none", cursor: "pointer" }} onClick={() => setOpen(open === o.id ? null : o.id)}>{o.publicId}</button></td>
                 <td>{o.customerName}</td>
                 <td style={{ fontSize: "0.72rem" }}>{o.email}<br />{o.phone}</td>
-                <td className="tk">{formatTk(o.subtotalTk + o.deliveryTk)}</td>
+                <td className="tk">{formatTk(o.subtotalTk - o.discountTk + o.deliveryTk)}</td>
                 <td>
                   <select value={shown} onChange={(e) => stage(o.id, e.target.value)}
                     style={{ background: "#0b0b0b", border: `1px solid ${pending ? "var(--gold)" : "var(--border)"}`, color: "var(--ivory)", padding: "0.3rem 0.4rem", fontSize: "0.72rem" }}>
@@ -189,11 +191,17 @@ export default function OrdersManager({ orders }: { orders: Order[] }) {
                       {/* Totals — delivery is charged by the customer's area. */}
                       <div className="adm-order-totals">
                         <div><span>Subtotal</span><span className="tk">{formatTk(o.subtotalTk)}</span></div>
+                        {o.discountTk > 0 && (
+                          <div>
+                            <span>Discount{o.couponCode ? ` · ${o.couponCode}` : ""}</span>
+                            <span className="tk">− {formatTk(o.discountTk)}</span>
+                          </div>
+                        )}
                         <div>
                           <span>Delivery{o.deliveryZone ? ` · ${deliveryZoneLabel(o.deliveryZone)}` : ""}</span>
                           <span className="tk">{formatTk(o.deliveryTk)}</span>
                         </div>
-                        <div className="tot"><span>Total</span><span className="tk">{formatTk(o.subtotalTk + o.deliveryTk)}</span></div>
+                        <div className="tot"><span>Total</span><span className="tk">{formatTk(o.subtotalTk - o.discountTk + o.deliveryTk)}</span></div>
                       </div>
                     </div>
                   </td>

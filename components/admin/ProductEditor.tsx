@@ -14,6 +14,8 @@ type ProductForm = {
   name: string;
   slug: string;
   categoryId: string;
+  /** "" = no sub-category. */
+  subCategoryId: string;
   type: "CUSTOM" | "READYMADE";
   priceTk: number;
   tailoringCharge: number;
@@ -45,10 +47,13 @@ type OptionGroup = {
 export default function ProductEditor({
   product,
   categories,
+  subCategories,
   groups,
 }: {
   product: ProductForm;
   categories: { id: string; name: string }[];
+  /** Every collection's sub-categories; the picker shows this one's. */
+  subCategories: { id: string; name: string; categoryId: string }[];
   groups: OptionGroup[];
 }) {
   const router = useRouter();
@@ -58,6 +63,9 @@ export default function ProductEditor({
   const upd = <K extends keyof ProductForm>(k: K, v: ProductForm[K]) => setF((p) => ({ ...p, [k]: v }));
 
   const isTailor = f.type === "CUSTOM";
+
+  // Only the sub-categories of the collection this product is in.
+  const subs = subCategories.filter((s) => s.categoryId === f.categoryId);
 
   // Options offered to this product: the ones scoped to its collection plus the
   // all-collection ones. Fabric is built in (its cloths come from Admin →
@@ -124,6 +132,7 @@ export default function ProductEditor({
         body: JSON.stringify({
           name: f.name,
           categoryId: f.categoryId,
+          subCategoryId: f.subCategoryId || null,
           type: f.type,
           priceTk: Number(f.priceTk),
           tailoringCharge: Number(f.tailoringCharge),
@@ -181,9 +190,32 @@ export default function ProductEditor({
           </div>
           <div className="adm-field">
             <label>Category</label>
-            <select value={f.categoryId} onChange={(e) => upd("categoryId", e.target.value)}>
+            <select
+              value={f.categoryId}
+              onChange={(e) => {
+                // Sub-categories belong to a collection, so moving the product
+                // clears one that no longer applies.
+                setF((p) => ({ ...p, categoryId: e.target.value, subCategoryId: "" }));
+              }}
+            >
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+          </div>
+          <div className="adm-field">
+            <label>Sub-Category</label>
+            <select
+              value={f.subCategoryId}
+              onChange={(e) => upd("subCategoryId", e.target.value)}
+              disabled={subs.length === 0}
+            >
+              <option value="">— None —</option>
+              {subs.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
+            </select>
+            <span className="adm-hint">
+              {subs.length === 0
+                ? "This collection has no sub-categories yet — add them in Categories & Banners."
+                : "Shoppers can filter the collection page by this."}
+            </span>
           </div>
           <div className="adm-field">
             <label>Product Type</label>

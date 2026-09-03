@@ -29,6 +29,8 @@ export default async function AdminOrders() {
           city: o.city,
           note: o.note,
           subtotalTk: o.subtotalTk,
+          discountTk: o.discountTk,
+          couponCode: o.couponCode,
           deliveryTk: o.deliveryTk,
           deliveryZone: o.deliveryZone,
           status: o.status,

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { formatTk } from "@/lib/format";
 import { tailorFromPrice, tailorPrice } from "@/lib/pricing";
+import { discountedPrice, type ProductDiscount } from "@/lib/campaign";
 import { joinChoices, splitChoices } from "@/lib/options";
 
 export type SizeOption = { label: string; stock: number };
@@ -27,6 +28,8 @@ export type ProductView = {
   fabricIndex: number;
   /** Yards of cloth this garment needs (admin-set per collection). */
   yardsNeeded: number;
+  /** A live campaign discount on this piece, or null. */
+  discount: ProductDiscount | null;
   description: string;
   specs: { label: string; value: string }[];
   sizeChartUrl: string | null;
@@ -111,6 +114,15 @@ export default function ProductPanel({ product }: { product: ProductView }) {
     ? tailorPrice(product.tailoringCharge, yardsNeeded, fabricYard)
     : product.priceTk;
 
+  // A live campaign takes its discount off last. The order API applies exactly
+  // the same discount when the order is placed, so the page, the bag and the
+  // invoice can never disagree.
+  const payPrice = discountedPrice(unitPrice, product.discount);
+  const fromPay = discountedPrice(fromPrice, product.discount);
+  const saving = unitPrice - payPrice;
+  const listedNow = isTailor ? fromPay : payPrice;
+  const listedWas = isTailor ? fromPrice : unitPrice;
+
   const addToCart = () => {
     const selections = isTailor
       ? {
@@ -131,7 +143,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
       slug: product.slug,
       name: product.name,
       type: product.type,
-      priceTk: unitPrice,
+      priceTk: payPrice,
       qty,
       image: product.image,
       size: isTailor ? undefined : size,
@@ -171,8 +183,14 @@ export default function ProductPanel({ product }: { product: ProductView }) {
       <div className="ppanel-pricerow">
         <span className="ppanel-price tk">
           {isTailor && <em className="ppanel-from">Starts from</em>}
-          {formatTk(isTailor ? fromPrice : product.priceTk, product.currency)}
+          {formatTk(listedNow, product.currency)}
+          {listedNow < listedWas && (
+            <s className="ppanel-was">{formatTk(listedWas, product.currency)}</s>
+          )}
         </span>
+        {product.discount && listedNow < listedWas && (
+          <span className="ppanel-off">{product.discount.label}</span>
+        )}
         <span className={`ppanel-type ${isTailor ? "tm" : "rm"}`}>
           {isTailor ? "Tailor Made" : "Ready Made"}
         </span>
@@ -201,9 +219,19 @@ export default function ProductPanel({ product }: { product: ProductView }) {
                 <span>Fabric cost</span>
                 <span className="tk">{formatTk(Math.round(fabricYard * yardsNeeded), product.currency)}</span>
               </div>
+              {saving > 0 && (
+                <div className="ppanel-charge-row">
+                  <span>
+                    {product.discount?.campaignName
+                      ? `${product.discount.campaignName} discount`
+                      : "Discount"}
+                  </span>
+                  <span className="tk ppanel-saving">− {formatTk(saving, product.currency)}</span>
+                </div>
+              )}
               <div className="ppanel-charge-row total">
                 <span>Total</span>
-                <span className="tk">{formatTk(unitPrice, product.currency)}</span>
+                <span className="tk">{formatTk(payPrice, product.currency)}</span>
               </div>
               <p className="ppanel-note">
                 A {product.categoryName.toLowerCase()} needs about {yardsNeeded} yards of cloth. {product.tailoringNote}
@@ -213,7 +241,7 @@ export default function ProductPanel({ product }: { product: ProductView }) {
             <>
               <div className="ppanel-charge-row total">
                 <span>Starts from</span>
-                <span className="tk">{formatTk(fromPrice, product.currency)}</span>
+                <span className="tk">{formatTk(fromPay, product.currency)}</span>
               </div>
               <p className="ppanel-note">Select a fabric below to see the exact price. {product.tailoringNote}</p>
             </>

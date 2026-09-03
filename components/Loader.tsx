@@ -53,7 +53,13 @@ export default function Loader() {
     const root = rootRef.current;
     if (!root) return;
     let alive = true;
-    const finish = () => alive && setGone(true);
+    const finish = () => {
+      if (!alive) return;
+      setGone(true);
+      // Anything that waits for the opening to finish (the campaign poster)
+      // listens for this rather than guessing at a delay.
+      window.dispatchEvent(new Event("ab:intro-done"));
+    };
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
