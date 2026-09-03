@@ -2825,11 +2825,14 @@ html.lenis body {
 }
 .ab-search-btn:hover { color: var(--gold); }
 
+/* The panel hugs its results rather than stretching to the full height, so a
+   two-result search doesn't leave a tall empty box beneath them. */
 .srch {
   position: fixed;
   inset: 0;
   z-index: 130;
   display: flex;
+  align-items: flex-start;
   justify-content: center;
   padding: clamp(4rem, 12vh, 8rem) 1.2rem 2rem;
 }

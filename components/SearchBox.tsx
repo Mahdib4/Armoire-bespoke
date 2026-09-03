@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatTk } from "@/lib/format";
@@ -12,6 +13,11 @@ import { loadSearchIndex } from "@/lib/search-index";
  * The whole catalogue is downloaded once, on the first open, and every
  * keystroke is matched against it in the browser — so suggestions, with photos
  * and prices, appear from the very first character with nothing to wait for.
+ *
+ * The panel is portalled to <body>. It lives in the header, and once the page
+ * is scrolled the header gets a backdrop-filter — which would make it the
+ * containing block for the fixed overlay and squash the panel into the
+ * header's own strip, clipped by its overflow.
  */
 export default function SearchBox({ currency = "Tk" }: { currency?: string }) {
   const [open, setOpen] = useState(false);
@@ -108,90 +114,92 @@ export default function SearchBox({ currency = "Tk" }: { currency?: string }) {
         </svg>
       </button>
 
-      {open && (
-        <div className="srch" role="dialog" aria-modal="true" aria-label="Search products">
-          <button className="srch-scrim" aria-label="Close search" onClick={() => setOpen(false)} />
-          <div className="srch-panel">
-            <div className="srch-bar">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-              <input
-                ref={inputRef}
-                value={q}
-                onChange={(e) => type(e.target.value)}
-                onKeyDown={onKeyDown}
-                placeholder="Search blazers, shirts, fabrics…"
-                aria-label="Search"
-                autoComplete="off"
-              />
-              {q && (
-                <button className="srch-clear" onClick={() => type("")} aria-label="Clear">
-                  ✕
+      {open &&
+        createPortal(
+          <div className="srch" role="dialog" aria-modal="true" aria-label="Search products">
+            <button className="srch-scrim" aria-label="Close search" onClick={() => setOpen(false)} />
+            <div className="srch-panel">
+              <div className="srch-bar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <input
+                  ref={inputRef}
+                  value={q}
+                  onChange={(e) => type(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  placeholder="Search blazers, shirts, fabrics…"
+                  aria-label="Search"
+                  autoComplete="off"
+                />
+                {q && (
+                  <button className="srch-clear" onClick={() => type("")} aria-label="Clear">
+                    ✕
+                  </button>
+                )}
+                <button className="srch-close" onClick={() => setOpen(false)}>
+                  Close
                 </button>
-              )}
-              <button className="srch-close" onClick={() => setOpen(false)}>
-                Close
-              </button>
+              </div>
+
+              <div className="srch-results">
+                {!q && (
+                  <p className="srch-hint">
+                    {loading ? "Preparing the catalogue…" : "Start typing — suggestions appear straight away."}
+                  </p>
+                )}
+                {q && failed && <p className="srch-hint">Search is unavailable right now.</p>}
+                {q && !failed && results.length === 0 && !loading && (
+                  <p className="srch-hint">
+                    Nothing matches &ldquo;{q}&rdquo;. Try a collection name, a fabric or a style.
+                  </p>
+                )}
+
+                {results.map((r, i) => (
+                  <Link
+                    key={r.slug}
+                    href={`/p/${r.slug}`}
+                    className={`srch-row ${i === active ? "on" : ""}`}
+                    onClick={() => setOpen(false)}
+                    onMouseEnter={() => setActive(i)}
+                  >
+                    <span className="srch-thumb">
+                      {r.image ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={r.image} alt="" loading="lazy" decoding="async" />
+                      ) : null}
+                      {r.badge && <em className="srch-off">{r.badge}</em>}
+                    </span>
+                    <span className="srch-info">
+                      <strong>{r.name}</strong>
+                      <small>
+                        {r.category}
+                        {r.sub ? ` · ${r.sub}` : ""} · {r.type === "CUSTOM" ? "Tailor Made" : "Ready Made"}
+                      </small>
+                    </span>
+                    <span className="srch-price tk">
+                      {r.type === "CUSTOM" && <em>from </em>}
+                      {formatTk(r.priceTk, currency)}
+                      {r.wasTk > 0 && <s>{formatTk(r.wasTk, currency)}</s>}
+                    </span>
+                  </Link>
+                ))}
+
+                {q && results.length > 0 && (
+                  <Link
+                    href={`/search?q=${encodeURIComponent(q.trim())}`}
+                    className="srch-all"
+                    onClick={() => setOpen(false)}
+                  >
+                    See all results for &ldquo;{q.trim()}&rdquo; →
+                  </Link>
+                )}
+              </div>
             </div>
-
-            <div className="srch-results">
-              {!q && (
-                <p className="srch-hint">
-                  {loading ? "Preparing the catalogue…" : "Start typing — suggestions appear straight away."}
-                </p>
-              )}
-              {q && failed && <p className="srch-hint">Search is unavailable right now.</p>}
-              {q && !failed && results.length === 0 && !loading && (
-                <p className="srch-hint">
-                  Nothing matches &ldquo;{q}&rdquo;. Try a collection name, a fabric or a style.
-                </p>
-              )}
-
-              {results.map((r, i) => (
-                <Link
-                  key={r.slug}
-                  href={`/p/${r.slug}`}
-                  className={`srch-row ${i === active ? "on" : ""}`}
-                  onClick={() => setOpen(false)}
-                  onMouseEnter={() => setActive(i)}
-                >
-                  <span className="srch-thumb">
-                    {r.image ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={r.image} alt="" loading="lazy" decoding="async" />
-                    ) : null}
-                    {r.badge && <em className="srch-off">{r.badge}</em>}
-                  </span>
-                  <span className="srch-info">
-                    <strong>{r.name}</strong>
-                    <small>
-                      {r.category}
-                      {r.sub ? ` · ${r.sub}` : ""} · {r.type === "CUSTOM" ? "Tailor Made" : "Ready Made"}
-                    </small>
-                  </span>
-                  <span className="srch-price tk">
-                    {r.type === "CUSTOM" && <em>from </em>}
-                    {formatTk(r.priceTk, currency)}
-                    {r.wasTk > 0 && <s>{formatTk(r.wasTk, currency)}</s>}
-                  </span>
-                </Link>
-              ))}
-
-              {q && results.length > 0 && (
-                <Link
-                  href={`/search?q=${encodeURIComponent(q.trim())}`}
-                  className="srch-all"
-                  onClick={() => setOpen(false)}
-                >
-                  See all results for &ldquo;{q.trim()}&rdquo; →
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
