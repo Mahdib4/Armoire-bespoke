@@ -21,6 +21,8 @@ export type CouponRules = {
   appliesTo: CouponScope;
   /** Category ids the code is limited to; empty = every collection. */
   categoryIds: string[];
+  /** Product ids the code is limited to; empty = not limited to particular pieces. */
+  productIds: string[];
   startsAt: Date | string | null;
   expiresAt: Date | string | null;
   usageLimit: number;
@@ -33,6 +35,7 @@ export type CouponRules = {
 export type CouponLine = {
   type: string; // CUSTOM | READYMADE | FABRIC
   categoryId?: string | null;
+  productId?: string | null;
   priceTk: number;
   qty: number;
 };
@@ -45,14 +48,23 @@ export function normalizeCode(code: string): string {
   return code.trim().toUpperCase().replace(/\s+/g, "");
 }
 
-/** The part of the order a code may discount (its scope and collections). */
+/**
+ * The part of the order a code may discount.
+ *
+ * Collections and pieces widen each other rather than narrowing: a code set to
+ * Blazer plus one particular shirt covers every blazer and that shirt. With
+ * neither set, the code covers the whole catalogue.
+ */
 export function eligibleSubtotal(lines: CouponLine[], rules: CouponRules): number {
+  const limited = rules.categoryIds.length > 0 || rules.productIds.length > 0;
   return lines.reduce((sum, l) => {
     // Fabric by the yard is sold at cost per yard and is never discounted.
     if (l.type === "FABRIC") return sum;
     if (rules.appliesTo !== "all" && l.type !== rules.appliesTo) return sum;
-    if (rules.categoryIds.length > 0 && !(l.categoryId && rules.categoryIds.includes(l.categoryId))) {
-      return sum;
+    if (limited) {
+      const byCategory = !!l.categoryId && rules.categoryIds.includes(l.categoryId);
+      const byProduct = !!l.productId && rules.productIds.includes(l.productId);
+      if (!byCategory && !byProduct) return sum;
     }
     return sum + l.priceTk * l.qty;
   }, 0);
@@ -96,11 +108,13 @@ export function checkCoupon(
     return {
       ok: false,
       error:
-        rules.appliesTo === "READYMADE"
-          ? "This code applies to Ready-Made pieces only."
-          : rules.appliesTo === "CUSTOM"
-            ? "This code applies to Tailor-Made pieces only."
-            : "This code doesn't apply to anything in your bag.",
+        rules.productIds.length > 0 && rules.categoryIds.length === 0
+          ? "This code applies to selected pieces only."
+          : rules.appliesTo === "READYMADE"
+            ? "This code applies to Ready-Made pieces only."
+            : rules.appliesTo === "CUSTOM"
+              ? "This code applies to Tailor-Made pieces only."
+              : "This code doesn't apply to anything in your bag.",
     };
   }
 

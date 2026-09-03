@@ -30,7 +30,7 @@ export default function CampaignSection({
       id={`campaign-${campaign.slug}`}
       style={campaign.accent ? ({ "--camp-accent": campaign.accent } as React.CSSProperties) : undefined}
     >
-      <div className="sec-head camp-head">
+      <div className="sec-head">
         <div>
           <span className="eyebrow">{campaign.badge || "Campaign"}</span>
           <h2 className="sec-title font-display">{campaign.headline}</h2>

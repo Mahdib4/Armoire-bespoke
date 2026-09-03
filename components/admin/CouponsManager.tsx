@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { describeCoupon } from "@/lib/coupon";
 
@@ -13,6 +13,7 @@ export type CouponForm = {
   maxDiscountTk: number;
   appliesTo: "all" | "READYMADE" | "CUSTOM";
   categoryIds: string[];
+  productIds: string[];
   startsAt: string;
   expiresAt: string;
   usageLimit: number;
@@ -31,12 +32,16 @@ function generateCode(): string {
   return out;
 }
 
+export type CouponProduct = { id: string; name: string; categoryName: string; image: string };
+
 export default function CouponsManager({
   coupons,
   categories,
+  products,
 }: {
   coupons: CouponForm[];
   categories: { id: string; name: string }[];
+  products: CouponProduct[];
 }) {
   const router = useRouter();
   const [newCode, setNewCode] = useState("");
@@ -94,7 +99,9 @@ export default function CouponsManager({
           </p>
         </div>
       ) : (
-        coupons.map((c) => <CouponCard key={c.id} coupon={c} categories={categories} />)
+        coupons.map((c) => (
+          <CouponCard key={c.id} coupon={c} categories={categories} products={products} />
+        ))
       )}
     </>
   );
@@ -103,15 +110,37 @@ export default function CouponsManager({
 function CouponCard({
   coupon,
   categories,
+  products,
 }: {
   coupon: CouponForm;
   categories: { id: string; name: string }[];
+  products: CouponProduct[];
 }) {
   const router = useRouter();
   const [f, setF] = useState<CouponForm>(coupon);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [q, setQ] = useState("");
   const upd = <K extends keyof CouponForm>(k: K, v: CouponForm[K]) => setF((p) => ({ ...p, [k]: v }));
+
+  const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const matches = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return [];
+    return products
+      .filter((p) => !f.productIds.includes(p.id))
+      .filter(
+        (p) => p.name.toLowerCase().includes(term) || p.categoryName.toLowerCase().includes(term)
+      )
+      .slice(0, 20);
+  }, [products, q, f.productIds]);
+
+  const addProduct = (id: string) => {
+    setF((p) => ({ ...p, productIds: [...p.productIds, id] }));
+    setQ("");
+  };
+  const removeProduct = (id: string) =>
+    setF((p) => ({ ...p, productIds: p.productIds.filter((x) => x !== id) }));
 
   const toggleCategory = (id: string) =>
     setF((p) => ({
@@ -137,6 +166,7 @@ function CouponCard({
           maxDiscountTk: Math.max(0, Math.round(Number(f.maxDiscountTk) || 0)),
           appliesTo: f.appliesTo,
           categoryIds: f.categoryIds,
+          productIds: f.productIds,
           startsAt: f.startsAt || null,
           expiresAt: f.expiresAt || null,
           usageLimit: Math.max(0, Math.round(Number(f.usageLimit) || 0)),
@@ -302,8 +332,73 @@ function CouponCard({
             ))}
           </div>
           <span className="adm-hint">
-            With none ticked the code works across the whole catalogue. Fabric sold by the yard is
-            never discounted.
+            With nothing ticked here or chosen below, the code works across the whole catalogue.
+            Fabric sold by the yard is never discounted.
+          </span>
+        </div>
+
+        <div className="adm-field wide">
+          <label>Limit to Individual Pieces</label>
+          {f.productIds.length > 0 && (
+            <div className="camp-items" style={{ marginBottom: "0.7rem" }}>
+              {f.productIds.map((id) => {
+                const p = byId.get(id);
+                if (!p) return null;
+                return (
+                  <div className="camp-item" key={id}>
+                    {p.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={p.image} alt="" className="adm-thumb" loading="lazy" decoding="async" />
+                    ) : (
+                      <div className="adm-thumb" />
+                    )}
+                    <div className="camp-item-name">
+                      <strong>{p.name}</strong>
+                      <small>{p.categoryName}</small>
+                    </div>
+                    <button
+                      className="adm-btn sm danger"
+                      type="button"
+                      onClick={() => removeProduct(id)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div className="camp-picker">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search a product to add…"
+              aria-label="Search products"
+            />
+          </div>
+          {matches.length > 0 && (
+            <div className="camp-pick-list">
+              {matches.map((p) => (
+                <button key={p.id} type="button" className="camp-pick" onClick={() => addProduct(p.id)}>
+                  {p.image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={p.image} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <span className="camp-pick-noimg" />
+                  )}
+                  <span>
+                    <strong>{p.name}</strong>
+                    <small>{p.categoryName}</small>
+                  </span>
+                  <em>+</em>
+                </button>
+              ))}
+            </div>
+          )}
+          <span className="adm-hint">
+            Use this for a code that only discounts one piece, or a handful. Collections and pieces
+            add together: tick <strong>Blazer</strong> and add one shirt, and the code covers every
+            blazer plus that shirt.
           </span>
         </div>
       </div>

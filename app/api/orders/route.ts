@@ -91,12 +91,14 @@ export async function POST(req: Request) {
         appliesTo:
           coupon.appliesTo === "READYMADE" || coupon.appliesTo === "CUSTOM" ? coupon.appliesTo : "all",
         categoryIds: parseJSON<string[]>(coupon.categoryIds, []),
+        productIds: parseJSON<string[]>(coupon.productIds, []),
       };
       const check = checkCoupon(
         rules,
         lineData.map((l) => ({
           type: l.type,
           categoryId: l.categoryId,
+          productId: l.productId,
           priceTk: l.priceTk,
           qty: l.qty,
         })),

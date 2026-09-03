@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS "Coupon" (
     "maxDiscountTk" INTEGER NOT NULL DEFAULT 0,
     "appliesTo" TEXT NOT NULL DEFAULT 'all',
     "categoryIds" TEXT,
+    "productIds" TEXT,
     "startsAt" TIMESTAMP(3),
     "expiresAt" TIMESTAMP(3),
     "usageLimit" INTEGER NOT NULL DEFAULT 0,
@@ -108,6 +109,9 @@ CREATE TABLE IF NOT EXISTS "CouponRedemption" (
 
     CONSTRAINT "CouponRedemption_pkey" PRIMARY KEY ("id")
 );
+
+-- A code may also be tied to individual pieces rather than whole collections.
+ALTER TABLE "Coupon" ADD COLUMN IF NOT EXISTS "productIds" TEXT;
 
 -- The coupon applied to an order. Existing orders keep discountTk = 0.
 ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "couponCode" TEXT;

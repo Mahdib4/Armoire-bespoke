@@ -14,6 +14,7 @@ const Schema = z.object({
   maxDiscountTk: z.number().int().min(0).max(10000000).optional(),
   appliesTo: z.enum(["all", "READYMADE", "CUSTOM"]).optional(),
   categoryIds: z.array(z.string()).optional(),
+  productIds: z.array(z.string()).max(500).optional(),
   startsAt: z.string().max(40).nullable().optional(),
   expiresAt: z.string().max(40).nullable().optional(),
   usageLimit: z.number().int().min(0).max(1000000).optional(),
@@ -68,8 +69,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       minSubtotalTk: d.minSubtotalTk,
       maxDiscountTk: d.maxDiscountTk,
       appliesTo: d.appliesTo,
-      // Empty list = every collection, stored as null to keep the meaning clear.
+      // Empty list = no restriction, stored as null to keep the meaning clear.
       categoryIds: d.categoryIds ? (d.categoryIds.length ? JSON.stringify(d.categoryIds) : null) : undefined,
+      productIds: d.productIds ? (d.productIds.length ? JSON.stringify(d.productIds) : null) : undefined,
       startsAt: toDate(d.startsAt),
       expiresAt: toDate(d.expiresAt),
       usageLimit: d.usageLimit,

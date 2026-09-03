@@ -312,6 +312,7 @@ model Coupon {
   maxDiscountTk Int                @default(0) // cap for percentage codes; 0 = no cap
   appliesTo     String             @default("all") // all | READYMADE | CUSTOM
   categoryIds   String? // JSON array of category ids; empty/null = every collection
+  productIds    String? // JSON array of product ids, for a code tied to specific pieces
   startsAt      DateTime?
   expiresAt     DateTime?
   usageLimit    Int                @default(0) // total redemptions allowed; 0 = unlimited

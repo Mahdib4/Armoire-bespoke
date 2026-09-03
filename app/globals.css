@@ -2563,12 +2563,13 @@ html.lenis body {
 }
 
 .camp-sec { padding: 5rem 0 4rem; }
-.camp-head { align-items: flex-start; }
+/* The measure is capped for readability, so the block needs auto margins to
+   stay centred under the headline rather than sitting against the left edge. */
 .camp-sub {
   color: var(--text-muted);
   font-family: var(--font-cormorant), serif;
   font-size: 1.05rem;
-  margin-top: 0.4rem;
+  margin: 0.4rem auto 0;
   max-width: 46ch;
 }
 .camp-cta { text-align: center; margin-top: 2.4rem; }
