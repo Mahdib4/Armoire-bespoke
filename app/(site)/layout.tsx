@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import AdminBar from "@/components/AdminBar";
 import Loader from "@/components/Loader";
 import CampaignPoster from "@/components/CampaignPoster";
-import { getSettings, getNavCategories, getPopupCampaign } from "@/lib/data";
+import { getSettings, getNavCategories, getPopupCampaign, getMarquee } from "@/lib/data";
 
 // Cache the shell (nav/settings) and regenerate periodically; admin edits also
 // trigger on-demand revalidation. No cookie reads here → pages stay cacheable.
@@ -16,10 +16,11 @@ export default async function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [settings, categories, poster] = await Promise.all([
+  const [settings, categories, poster, marquee] = await Promise.all([
     getSettings(),
     getNavCategories(),
     getPopupCampaign(),
+    getMarquee(),
   ]);
 
   // Menu: the product collections, then Fabrics (after Kurta) and Share Your Inspiration.
@@ -41,6 +42,7 @@ export default async function SiteLayout({
           items={items}
           facebook={settings.facebook}
           instagram={settings.instagram}
+          marquee={marquee}
         />
         <main>{children}</main>
         <Footer settings={settings} categories={categories} />

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useCart } from "@/lib/cart";
 import { formatTk } from "@/lib/format";
 import { DELIVERY_ZONES, type DeliveryZone } from "@/lib/pricing";
+import { CITIES, zoneForCity } from "@/lib/delivery";
 
 export default function CheckoutForm({
   deliveryRates,
@@ -13,7 +14,7 @@ export default function CheckoutForm({
   /** Zone → charge in Tk, resolved server-side from Site Settings. */
   deliveryRates: Record<DeliveryZone, number>;
 }) {
-  const { items, subtotal, clear, ready } = useCart();
+  const { items, subtotal, savings, clear, ready } = useCart();
   const router = useRouter();
   const [form, setForm] = useState({
     name: "",
@@ -24,7 +25,9 @@ export default function CheckoutForm({
     appointment: "",
     note: "",
   });
-  const [zone, setZone] = useState<DeliveryZone>("inside-dhaka");
+  // The zone follows the city — it is never chosen directly, so the Dhaka rate
+  // can't be paid on an address outside Dhaka. The server derives it again.
+  const zone: DeliveryZone = zoneForCity(form.city);
   const hasTailor = items.some((i) => i.type === "CUSTOM");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +98,10 @@ export default function CheckoutForm({
       setError("Please provide your name, email and phone.");
       return;
     }
+    if (!form.city) {
+      setError("Please choose your city so we can work out the delivery charge.");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/orders", {
@@ -102,7 +109,6 @@ export default function CheckoutForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: form,
-          deliveryZone: zone,
           couponCode: coupon?.code,
           items: cartPayload(),
         }),
@@ -160,28 +166,39 @@ export default function CheckoutForm({
               <input value={form.address} onChange={set("address")} />
             </label>
             <label className="field">
-              <span>City</span>
-              <input value={form.city} onChange={set("city")} />
+              <span>City *</span>
+              <select
+                value={form.city}
+                onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                required
+              >
+                <option value="">Select your city…</option>
+                {CITIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </label>
 
-            {/* Delivery area drives the delivery charge added to the total. */}
+            {/* The delivery charge follows the city — it isn't a separate choice. */}
             <div className="field wide">
-              <span className="field-label">Delivery Area *</span>
-              <div className="zone-row">
-                {DELIVERY_ZONES.map((z) => (
-                  <label key={z.value} className={`zone-chip ${zone === z.value ? "on" : ""}`}>
-                    <input
-                      type="radio"
-                      name="delivery-zone"
-                      value={z.value}
-                      checked={zone === z.value}
-                      onChange={() => setZone(z.value)}
-                    />
-                    <span>{z.label}</span>
-                    <em className="tk">{formatTk(deliveryRates[z.value] ?? 0)}</em>
-                  </label>
-                ))}
-              </div>
+              <span className="field-label">Delivery Charge</span>
+              {form.city ? (
+                <div className="zone-note">
+                  <span>
+                    {DELIVERY_ZONES.find((z) => z.value === zone)?.label} — {form.city}
+                  </span>
+                  <em className="tk">{formatTk(deliveryTk)}</em>
+                </div>
+              ) : (
+                <div className="zone-note muted">
+                  <span>Choose your city and the charge is added automatically.</span>
+                  <em className="tk">
+                    {formatTk(deliveryRates["inside-dhaka"])} / {formatTk(deliveryRates["outside-dhaka"])}
+                  </em>
+                </div>
+              )}
             </div>
 
             {hasTailor && (
@@ -229,7 +246,12 @@ export default function CheckoutForm({
                       : `Ready-Made · ${it.size ?? ""}`}
                 </small>
               </div>
-              <span className="tk">{formatTk(it.priceTk * it.qty)}</span>
+              <span className="tk">
+                {formatTk(it.priceTk * it.qty)}
+                {it.wasTk && it.wasTk > it.priceTk && (
+                  <s className="cart-was">{formatTk(it.wasTk * it.qty)}</s>
+                )}
+              </span>
             </div>
           ))}
           {/* Discount code */}
@@ -263,9 +285,20 @@ export default function CheckoutForm({
                 </button>
               </div>
             )}
-            {couponError && <p className="cosum-coupon-err">{couponError}</p>}
+            {couponError && (
+              <p className="cosum-coupon-err" role="alert">
+                <span aria-hidden>✕</span>
+                <span>{couponError}</span>
+              </p>
+            )}
           </div>
 
+          {savings > 0 && (
+            <div className="cart-sum-row">
+              <span>Campaign saving</span>
+              <span className="tk cosum-off">− {formatTk(savings)}</span>
+            </div>
+          )}
           <div className="cart-sum-row">
             <span>Subtotal</span>
             <span className="tk">{formatTk(subtotal)}</span>

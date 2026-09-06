@@ -47,6 +47,7 @@ export async function POST(req: Request) {
     productId: l.productId,
     priceTk: l.priceTk,
     qty: l.qty,
+    couponBlocked: l.couponBlocked,
   }));
 
   const email = parsed.data.email?.trim().toLowerCase();

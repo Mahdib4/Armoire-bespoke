@@ -5,7 +5,7 @@ import { useCart } from "@/lib/cart";
 import { formatTk } from "@/lib/format";
 
 export default function CartPage() {
-  const { items, subtotal, setQty, remove, ready } = useCart();
+  const { items, subtotal, savings, setQty, remove, ready } = useCart();
 
   if (ready && items.length === 0) {
     return (
@@ -71,7 +71,13 @@ export default function CartPage() {
                     <span>{it.qty}</span>
                     <button onClick={() => setQty(it.key, it.qty + 1)} aria-label="Increase">+</button>
                   </div>
-                  <span className="cart-price tk">{formatTk(it.priceTk * it.qty)}</span>
+                  <span className="cart-price tk">
+                    {formatTk(it.priceTk * it.qty)}
+                    {it.wasTk && it.wasTk > it.priceTk && (
+                      <s className="cart-was">{formatTk(it.wasTk * it.qty)}</s>
+                    )}
+                  </span>
+                  {it.discountLabel && <span className="cart-off">{it.discountLabel}</span>}
                   <button className="cart-remove" onClick={() => remove(it.key)}>
                     Remove
                   </button>
@@ -84,6 +90,12 @@ export default function CartPage() {
 
         <aside className="cart-summary">
           <h3>Summary</h3>
+          {savings > 0 && (
+            <div className="cart-sum-row">
+              <span>Campaign saving</span>
+              <span className="tk cart-saving">− {formatTk(savings)}</span>
+            </div>
+          )}
           <div className="cart-sum-row">
             <span>Subtotal</span>
             <span className="tk">{formatTk(subtotal)}</span>

@@ -16,7 +16,7 @@ import {
   discountedPrice,
   isCampaignLive,
   isDiscountType,
-  type ProductDiscount,
+  resolveDiscount,
 } from "@/lib/campaign";
 
 export const revalidate = 120;
@@ -84,18 +84,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
         priceMap.get(catSlug) ?? {}
       );
       // A product may carry its own discount; otherwise it follows the campaign.
-      const type = isDiscountType(i.discountType) ? i.discountType : campaign.discountType;
-      const value = i.discountType ? (i.discountValue ?? 0) : campaign.discountValue;
-      const d: ProductDiscount | null = isDiscountType(type)
-        ? {
-            type,
-            value,
-            label: i.badgeText || campaign.badgeText || defaultBadgeText(type, value),
-            showBadge: campaign.showBadges && i.showBadge,
-            campaignSlug: campaign.slug,
-            campaignName: campaign.name,
-          }
-        : null;
+      const d = resolveDiscount(campaign, i);
       const now = discountedPrice(base, d);
       return {
         slug: p.slug,

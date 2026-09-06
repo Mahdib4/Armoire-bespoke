@@ -24,6 +24,8 @@ export type ProductDiscount = {
   label: string;
   /** Whether the admin wants the corner label on this product's card. */
   showBadge: boolean;
+  /** Campaign prices are already reduced, so coupons are refused on top. */
+  blockCoupons: boolean;
   campaignSlug: string;
   campaignName: string;
 };
@@ -46,6 +48,51 @@ export function defaultBadgeText(type: DiscountType, value: number, currency = "
   if (type === "percent" && value > 0) return `${value}% OFF`;
   if (type === "fixed" && value > 0) return `${currency} ${value} OFF`;
   return "";
+}
+
+/** A campaign, as much of it as working out a discount needs. */
+export type DiscountCampaign = {
+  slug: string;
+  name: string;
+  discountType: string;
+  discountValue: number;
+  badgeText: string | null;
+  showBadges: boolean;
+  blockCoupons: boolean;
+};
+
+/** One product's place in a campaign, with its optional overrides. */
+export type DiscountItem = {
+  discountType: string | null;
+  discountValue: number | null;
+  badgeText: string | null;
+  showBadge: boolean;
+};
+
+/**
+ * The discount a product actually gets: its own if it has one, otherwise the
+ * campaign's. Returns null when nothing is taken off.
+ *
+ * Every surface that prices a campaign piece — the homepage rail, the campaign
+ * page, the product page, the cart and the order API — goes through here, so
+ * they cannot drift apart.
+ */
+export function resolveDiscount(
+  campaign: DiscountCampaign,
+  item: DiscountItem
+): ProductDiscount | null {
+  const type = item.discountType ?? campaign.discountType;
+  const value = item.discountType ? (item.discountValue ?? 0) : campaign.discountValue;
+  if (!isDiscountType(type) || type === "none" || value <= 0) return null;
+  return {
+    type,
+    value,
+    label: item.badgeText || campaign.badgeText || defaultBadgeText(type, value),
+    showBadge: campaign.showBadges && item.showBadge,
+    blockCoupons: campaign.blockCoupons,
+    campaignSlug: campaign.slug,
+    campaignName: campaign.name,
+  };
 }
 
 /** Is this campaign running right now? Scheduling is optional: a blank start

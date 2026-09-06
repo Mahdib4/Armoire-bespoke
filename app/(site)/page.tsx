@@ -1,5 +1,4 @@
 import Hero from "@/components/Hero";
-import Marquee from "@/components/Marquee";
 import QuoteBand from "@/components/QuoteBand";
 import CampaignSection from "@/components/CampaignSection";
 import CategorySection from "@/components/CategorySection";
@@ -16,17 +15,16 @@ import {
   getLookbook,
   getReviews,
   getShowcaseFabrics,
-  getMarquee,
   getLiveCampaigns,
   getCategoryFabricPrices,
 } from "@/lib/data";
 import { cardPrice, categoryTailoringCharge, garmentYards } from "@/lib/pricing";
-import { defaultBadgeText, discountedPrice, isDiscountType } from "@/lib/campaign";
+import { defaultBadgeText, discountedPrice, isDiscountType, resolveDiscount } from "@/lib/campaign";
 
 export const revalidate = 120;
 
 export default async function HomePage() {
-  const [settings, categories, quotes, sections, looks, reviews, showcaseFabrics, marquee, campaigns] =
+  const [settings, categories, quotes, sections, looks, reviews, showcaseFabrics, campaigns] =
     await Promise.all([
       getSettings(),
       getHomeCategories(),
@@ -35,7 +33,6 @@ export default async function HomePage() {
       getLookbook(),
       getReviews(),
       getShowcaseFabrics(),
-      getMarquee(),
       getLiveCampaigns(),
     ]);
 
@@ -74,18 +71,7 @@ export default async function HomePage() {
                 garmentYards(catSlug, settings),
                 priceMap.get(catSlug) ?? {}
               );
-              const type = isDiscountType(i.discountType) ? i.discountType : c.discountType;
-              const value = i.discountType ? (i.discountValue ?? 0) : c.discountValue;
-              const d = isDiscountType(type)
-                ? {
-                    type,
-                    value,
-                    label: i.badgeText || c.badgeText || defaultBadgeText(type, value),
-                    showBadge: c.showBadges && i.showBadge,
-                    campaignSlug: c.slug,
-                    campaignName: c.name,
-                  }
-                : null;
+              const d = resolveDiscount(c, i);
               const now = discountedPrice(base, d);
               return {
                 slug: p.slug,
@@ -119,9 +105,6 @@ export default async function HomePage() {
           background="var(--deep)"
         />
       )}
-
-      {/* Announcement strip — content, styling and visibility all set in Admin → Marquee. */}
-      <Marquee config={marquee} />
 
       <Storytelling section={sections["storytelling"]} image={storyImage} />
       {q("after-storytelling") && <QuoteBand text={q("after-storytelling").text} />}

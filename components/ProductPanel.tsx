@@ -144,6 +144,9 @@ export default function ProductPanel({ product }: { product: ProductView }) {
       name: product.name,
       type: product.type,
       priceTk: payPrice,
+      // Carry the pre-discount price so the bag can show what was saved.
+      wasTk: payPrice < unitPrice ? unitPrice : undefined,
+      discountLabel: payPrice < unitPrice ? product.discount?.label : undefined,
       qty,
       image: product.image,
       size: isTailor ? undefined : size,

@@ -25,11 +25,17 @@ export type PricedLine = {
   productName: string;
   type: string; // CUSTOM | READYMADE | FABRIC
   priceTk: number; // unit price, after any live campaign discount
+  /** Unit price before that discount — equal to priceTk when nothing applies. */
+  listTk: number;
+  /** The campaign's corner label, blank when nothing applies. */
+  discountLabel: string;
   qty: number;
   selections: string | null;
   measurements: string | null;
   /** Which collection the line belongs to — used by coupon rules. */
   categoryId: string | null;
+  /** On a campaign price already, so a coupon may not discount it again. */
+  couponBlocked: boolean;
 };
 
 /**
@@ -41,11 +47,14 @@ export type PricedLine = {
  * - Fabric by the yard: price per yard × yards.
  *
  * Any live campaign discount is applied last, so a discounted piece is charged
- * at its discounted price even if the browser sent something else. Used both
- * when a coupon is previewed and when the order is actually placed, so the two
- * can never disagree.
+ * at its discounted price even if the browser sent something else. Used when a
+ * coupon is previewed, when the bag re-checks itself, and when the order is
+ * placed, so none of them can disagree.
+ *
+ * This variant keeps a null in place of a line it cannot price, so callers can
+ * line the answers up with what they sent.
  */
-export async function priceCart(items: CartInput[]): Promise<PricedLine[]> {
+export async function priceCartLines(items: CartInput[]): Promise<(PricedLine | null)[]> {
   const products = await prisma.product.findMany({
     where: { id: { in: items.filter((i) => !i.fabric).map((i) => i.productId) }, active: true },
     include: { category: { select: { id: true, slug: true } } },
@@ -77,15 +86,19 @@ export async function priceCart(items: CartInput[]): Promise<PricedLine[]> {
           productName: `${it.fabric.name} — fabric (${yards} yd)`,
           type: "FABRIC",
           priceTk: Math.round(perYard * yards),
+          listTk: Math.round(perYard * yards),
+          discountLabel: "",
           qty: it.qty,
           selections: JSON.stringify(selections),
           measurements: it.fabric.note ? JSON.stringify({ Note: it.fabric.note }) : null,
           categoryId: null,
+          couponBlocked: false,
         };
       }
 
       const p = byId.get(it.productId);
       if (!p) return null;
+      const discount = discounts.get(p.id);
 
       let unit: number;
       if (p.type === "READYMADE") {
@@ -102,16 +115,25 @@ export async function priceCart(items: CartInput[]): Promise<PricedLine[]> {
         );
       }
 
+      const paid = discountedPrice(unit, discount);
       return {
         productId: p.id,
         productName: p.name,
         type: p.type,
-        priceTk: discountedPrice(unit, discounts.get(p.id)),
+        priceTk: paid,
+        listTk: unit,
+        discountLabel: paid < unit ? (discount?.label ?? "") : "",
         qty: it.qty,
         selections: it.selections ? JSON.stringify(it.selections) : null,
         measurements: it.measurements ? JSON.stringify(it.measurements) : null,
         categoryId: p.category.id,
+        // Only a discount that actually reduced the price blocks a coupon.
+        couponBlocked: !!discount && discount.blockCoupons && paid < unit,
       };
-    })
-    .filter((l): l is PricedLine => l !== null);
+    });
+}
+
+/** The priceable lines only — what an order is actually built from. */
+export async function priceCart(items: CartInput[]): Promise<PricedLine[]> {
+  return (await priceCartLines(items)).filter((l): l is PricedLine => l !== null);
 }

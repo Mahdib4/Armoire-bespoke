@@ -1,0 +1,11 @@
+-- Armoire Bespoke — production schema update
+-- Run this ONCE in the Neon SQL editor before deploying the
+-- "campaign pieces excluded from coupons" change.
+--
+-- It is idempotent: safe to run twice. Nothing is deleted.
+--
+-- A campaign's prices are already reduced, so a coupon on top would discount
+-- the same piece twice. Existing campaigns take the new default (true), which
+-- refuses coupons on their pieces; the owner can allow them per campaign from
+-- Admin -> Campaigns.
+ALTER TABLE "Campaign" ADD COLUMN IF NOT EXISTS "blockCoupons" BOOLEAN NOT NULL DEFAULT true;

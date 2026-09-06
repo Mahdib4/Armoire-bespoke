@@ -69,6 +69,7 @@ export default async function EditCampaignPage({
           discountValue: campaign.discountValue,
           badgeText: campaign.badgeText || "",
           showBadges: campaign.showBadges,
+          blockCoupons: campaign.blockCoupons,
           accent: campaign.accent || "",
           bannerType: campaign.bannerType === "video" ? "video" : "image",
           bannerUrl: campaign.bannerUrl || "",

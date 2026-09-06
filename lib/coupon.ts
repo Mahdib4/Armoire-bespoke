@@ -38,7 +38,12 @@ export type CouponLine = {
   productId?: string | null;
   priceTk: number;
   qty: number;
+  /** On a campaign whose price is already reduced — no coupon on top. */
+  couponBlocked?: boolean;
 };
+
+/** The wording the owner asked for when a piece is on a campaign price. */
+export const CAMPAIGN_BLOCKED_MESSAGE = "Voucher not applicable for this product.";
 
 export type CouponCheck =
   | { ok: true; discountTk: number; eligibleTk: number; message: string }
@@ -60,6 +65,8 @@ export function eligibleSubtotal(lines: CouponLine[], rules: CouponRules): numbe
   return lines.reduce((sum, l) => {
     // Fabric by the yard is sold at cost per yard and is never discounted.
     if (l.type === "FABRIC") return sum;
+    // A campaign piece is already reduced; a coupon would discount it twice.
+    if (l.couponBlocked) return sum;
     if (rules.appliesTo !== "all" && l.type !== rules.appliesTo) return sum;
     if (limited) {
       const byCategory = !!l.categoryId && rules.categoryIds.includes(l.categoryId);
@@ -105,6 +112,12 @@ export function checkCoupon(
 
   const eligible = eligibleSubtotal(lines, rules);
   if (eligible <= 0) {
+    // Every piece a coupon could otherwise have applied to is on a campaign
+    // price, so say exactly that rather than something vaguer.
+    const sellable = lines.filter((l) => l.type !== "FABRIC");
+    if (sellable.length > 0 && sellable.every((l) => l.couponBlocked)) {
+      return { ok: false, error: CAMPAIGN_BLOCKED_MESSAGE };
+    }
     return {
       ok: false,
       error:

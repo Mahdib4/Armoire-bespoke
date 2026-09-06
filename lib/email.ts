@@ -1,7 +1,7 @@
 import "server-only";
 import nodemailer from "nodemailer";
 import { formatTk } from "./format";
-import { deliveryZoneLabel } from "./pricing";
+import { deliveryZoneLabel, orderTotal } from "./pricing";
 
 type OrderLine = {
   productName: string;
@@ -27,15 +27,6 @@ export type OrderEmailData = {
   deliveryZone?: string | null;
   items: OrderLine[];
 };
-
-/** Everything payable: items, less any coupon, plus delivery. */
-export function orderTotal(o: {
-  subtotalTk: number;
-  discountTk?: number;
-  deliveryTk?: number;
-}): number {
-  return o.subtotalTk - (o.discountTk ?? 0) + (o.deliveryTk ?? 0);
-}
 
 function transport() {
   const user = process.env.SMTP_USER;

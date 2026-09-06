@@ -260,6 +260,9 @@ model Campaign {
   /// Text on the corner label, e.g. "20% OFF". Blank = generated from the discount.
   badgeText     String?
   showBadges    Boolean           @default(true) // corner labels on the product cards
+  /// Campaign prices are already reduced, so coupons are refused on these
+  /// pieces unless the owner allows them.
+  blockCoupons  Boolean           @default(true)
   accent        String? // hex accent colour for the campaign's styling
   bannerType    String            @default("image") // image | video
   bannerUrl     String?

@@ -146,3 +146,12 @@ export function deliveryCharge(
 export function deliveryZoneLabel(zone: string | null | undefined): string {
   return DELIVERY_ZONES.find((z) => z.value === zone)?.label ?? "";
 }
+
+/** Everything payable on an order: items, less any coupon, plus delivery. */
+export function orderTotal(o: {
+  subtotalTk: number;
+  discountTk?: number | null;
+  deliveryTk?: number | null;
+}): number {
+  return o.subtotalTk - (o.discountTk ?? 0) + (o.deliveryTk ?? 0);
+}

@@ -33,6 +33,7 @@ export type CampaignForm = {
   discountValue: number;
   badgeText: string;
   showBadges: boolean;
+  blockCoupons: boolean;
   accent: string;
   bannerType: "image" | "video";
   bannerUrl: string;
@@ -154,6 +155,7 @@ export default function CampaignEditor({
           discountValue: Math.max(0, Math.round(Number(f.discountValue) || 0)),
           badgeText: f.badgeText || null,
           showBadges: f.showBadges,
+          blockCoupons: f.blockCoupons,
           accent: f.accent || null,
           bannerType: f.bannerType,
           bannerUrl: f.bannerUrl || null,
@@ -271,6 +273,18 @@ export default function CampaignEditor({
               <button type="button" className={!f.showBadges ? "on" : ""} onClick={() => upd("showBadges", false)}>Hide</button>
             </div>
             <span className="adm-hint">The label sits in the top-right corner of the photo.</span>
+          </div>
+          <div className="adm-field">
+            <label>Coupon Codes on these Pieces</label>
+            <div className="adm-toggle">
+              <button type="button" className={f.blockCoupons ? "on" : ""} onClick={() => upd("blockCoupons", true)}>Not allowed</button>
+              <button type="button" className={!f.blockCoupons ? "on" : ""} onClick={() => upd("blockCoupons", false)}>Allowed</button>
+            </div>
+            <span className="adm-hint">
+              These pieces are already reduced, so a coupon on top would discount them twice. Left on
+              &ldquo;Not allowed&rdquo;, a customer entering a code sees
+              &ldquo;Voucher not applicable for this product.&rdquo;
+            </span>
           </div>
           <div className="adm-field">
             <label>Accent Colour</label>

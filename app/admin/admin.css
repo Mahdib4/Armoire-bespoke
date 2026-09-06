@@ -549,3 +549,20 @@
   background: none;
   accent-color: var(--gold);
 }
+
+/* Assigning pieces to a sub-category, opened from its row. */
+.adm-sub-row { flex-wrap: wrap; }
+.adm-sub-products {
+  flex: 1 0 100%;
+  margin-top: 0.6rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  background: #0d0d0d;
+}
+.adm-sub-products .camp-pick-list { max-height: 260px; }
+.camp-pick.on {
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.08);
+}
+.camp-pick.on em { color: var(--gold); }
+.camp-pick small { color: var(--gold-dim); }

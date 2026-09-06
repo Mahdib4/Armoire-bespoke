@@ -14,7 +14,14 @@ export default async function AdminCategories() {
         measurementFields: { orderBy: { order: "asc" } },
         subCategories: {
           orderBy: { order: "asc" },
-          include: { _count: { select: { products: true } } },
+          include: {
+            _count: { select: { products: true } },
+            products: { select: { id: true } },
+          },
+        },
+        products: {
+          orderBy: { order: "asc" },
+          select: { id: true, name: true, images: { orderBy: { order: "asc" }, take: 1 } },
         },
         _count: { select: { products: true } },
       },
@@ -59,6 +66,12 @@ export default async function AdminCategories() {
               slug: s.slug,
               active: s.active,
               productCount: s._count.products,
+              productIds: s.products.map((p) => p.id),
+            })),
+            products: c.products.map((p) => ({
+              id: p.id,
+              name: p.name,
+              image: p.images[0]?.url ?? "",
             })),
           }}
         />

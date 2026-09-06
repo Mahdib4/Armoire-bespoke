@@ -5,7 +5,8 @@ import { sendOrderEmails } from "@/lib/email";
 import { sendAdminPush } from "@/lib/push";
 import { getSettings } from "@/lib/data";
 import { priceCart } from "@/lib/order-pricing";
-import { deliveryCharge, isDeliveryZone } from "@/lib/pricing";
+import { deliveryCharge } from "@/lib/pricing";
+import { zoneForCity } from "@/lib/delivery";
 import { checkCoupon, normalizeCode, type CouponRules } from "@/lib/coupon";
 import { formatTk, orderPublicId, parseJSON } from "@/lib/format";
 
@@ -37,7 +38,7 @@ const OrderSchema = z.object({
     appointment: z.string().max(60).optional(),
     note: z.string().max(600).optional(),
   }),
-  deliveryZone: z.enum(["inside-dhaka", "outside-dhaka"]).optional(),
+  // No deliveryZone here on purpose: it is derived from the city below.
   couponCode: z.string().max(40).optional(),
   items: z.array(ItemSchema).min(1).max(30),
 });
@@ -66,9 +67,10 @@ export async function POST(req: Request) {
   }
 
   const subtotal = lineData.reduce((n, l) => n + l.priceTk * l.qty, 0);
-  // Delivery is set by the customer's area and priced from Site Settings —
-  // never from the client. Defaults: Tk 70 inside Dhaka, Tk 130 outside.
-  const zone = isDeliveryZone(parsed.data.deliveryZone) ? parsed.data.deliveryZone : null;
+  // Delivery follows the customer's city, worked out here rather than taken
+  // from the request, so the Dhaka rate can never be paid on an address outside
+  // Dhaka. The rate itself comes from Site Settings (Tk 70 / Tk 130 by default).
+  const zone = zoneForCity(customer.city);
   const delivery = deliveryCharge(settings, zone);
 
   // Coupon: every rule is checked again here, against the prices worked out
@@ -101,6 +103,7 @@ export async function POST(req: Request) {
           productId: l.productId,
           priceTk: l.priceTk,
           qty: l.qty,
+          couponBlocked: l.couponBlocked,
         })),
         subtotal,
         redeemed

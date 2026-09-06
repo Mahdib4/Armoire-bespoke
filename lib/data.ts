@@ -2,12 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "./prisma";
 import { slugify } from "./slug";
-import {
-  defaultBadgeText,
-  isCampaignLive,
-  isDiscountType,
-  type ProductDiscount,
-} from "./campaign";
+import { isCampaignLive, resolveDiscount, type ProductDiscount } from "./campaign";
 import { MARQUEE_SECTION_KEY, parseMarquee, type MarqueeConfig } from "./marquee";
 import { cardPrice, categoryTailoringCharge, garmentYards } from "./pricing";
 import { discountedPrice } from "./campaign";
@@ -374,17 +369,8 @@ export const getProductDiscounts = cache(async (): Promise<Map<string, ProductDi
   const live = await getLiveCampaigns();
   for (const c of live) {
     for (const item of c.items) {
-      const type = isDiscountType(item.discountType) ? item.discountType : c.discountType;
-      const value = item.discountType ? (item.discountValue ?? 0) : c.discountValue;
-      if (!isDiscountType(type) || type === "none" || value <= 0) continue;
-      const d: ProductDiscount = {
-        type,
-        value,
-        label: item.badgeText || c.badgeText || defaultBadgeText(type, value),
-        showBadge: c.showBadges && item.showBadge,
-        campaignSlug: c.slug,
-        campaignName: c.name,
-      };
+      const d = resolveDiscount(c, item);
+      if (!d) continue;
       const existing = out.get(item.productId);
       // Percentages and flat amounts aren't directly comparable; compare what
       // each would take off a nominal Tk 10,000 piece.

@@ -2,7 +2,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Uploader from "./Uploader";
-import SubCategoriesEditor, { type SubCategoryRow } from "./SubCategoriesEditor";
+import SubCategoriesEditor, {
+  type SubCategoryProduct,
+  type SubCategoryRow,
+} from "./SubCategoriesEditor";
 import { fabricYardsKey, tailoringChargeKey } from "@/lib/pricing";
 
 type Measurement = { label: string; unit: string; hint: string | null };
@@ -23,6 +26,8 @@ export type CategoryForm = {
   active: boolean;
   measurements: Measurement[];
   subCategories: SubCategoryRow[];
+  /** This collection's products, for assigning to sub-categories. */
+  products: SubCategoryProduct[];
 };
 
 export default function CategoryEditor({ category }: { category: CategoryForm }) {
@@ -184,6 +189,7 @@ export default function CategoryEditor({ category }: { category: CategoryForm })
         categoryId={f.id}
         categoryName={f.name}
         subCategories={category.subCategories}
+        products={category.products}
       />
 
       <div style={{ marginTop: "1.2rem" }}>

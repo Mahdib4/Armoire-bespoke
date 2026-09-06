@@ -396,27 +396,51 @@ html.lenis body {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ============================ HEADER ============================ */
+/* The header carries the announcement strip beneath its bar, so the strip is
+   fixed with it and stays on screen for the whole visit. The padding lives on
+   the bar rather than the header, so the strip can span the full width. */
 .ab-header {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 120;
   display: flex;
+  flex-direction: column;
+  background: linear-gradient(to bottom, rgba(6, 6, 6, 0.82), rgba(6, 6, 6, 0));
+  transition: background 0.4s var(--ease);
+  overflow-x: clip;
+}
+.ab-header-bar {
+  display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 1.5rem clamp(1.25rem, 4vw, 3.5rem);
-  background: linear-gradient(to bottom, rgba(6, 6, 6, 0.82), rgba(6, 6, 6, 0));
-  transition: padding 0.4s var(--ease), background 0.4s var(--ease);
-  overflow-x: clip;
   gap: 1rem;
+  width: 100%;
+  padding: 1.5rem clamp(1.25rem, 4vw, 3.5rem);
+  transition: padding 0.4s var(--ease);
 }
 .ab-brand { min-width: 0; }
 .ab-logo { max-width: 72vw; }
 .ab-header.scrolled {
-  padding-top: 0.85rem;
-  padding-bottom: 0.85rem;
   background: rgba(9, 9, 9, 0.94);
   border-bottom: 1px solid rgba(201, 168, 76, 0.14);
   backdrop-filter: blur(8px);
+}
+.ab-header.scrolled .ab-header-bar {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+/* Inside the header the strip is part of the furniture, not a page section. */
+.ab-header .mq { border-top: 1px solid; }
+
+/* Over the hero a solid band across the video looks wrong, so the strip stays
+   closed until the header itself becomes a solid bar. The open height is the
+   strip's own measured height, so it works whatever the admin sets. */
+.ab-mq-slot {
+  overflow: hidden;
+  transition: height 0.45s var(--ease), opacity 0.3s var(--ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ab-mq-slot { transition: none; }
 }
 .ab-brand {
   display: flex;
@@ -524,7 +548,9 @@ html.lenis body {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   /* Symmetric padding keeps the menu clear of the fixed header at the top. */
-  padding: clamp(5.5rem, 15vw, 7.5rem) 1.5rem;
+  /* Clear the header, whatever it currently measures (the announcement strip
+     makes it taller). The clamp is the fallback before the script runs. */
+  padding: calc(var(--ab-header-h, clamp(5.5rem, 15vw, 7.5rem)) + 1.4rem) 1.5rem 1.5rem;
 }
 .ab-overlay.show {
   opacity: 1;
@@ -1206,7 +1232,8 @@ html.lenis body {
   border: 0;
 }
 .pdp {
-  padding: clamp(6.5rem, 12vw, 9rem) clamp(1.25rem, 5vw, 5rem) 4rem;
+  padding: max(clamp(6.5rem, 12vw, 9rem), calc(var(--ab-header-max, 0px) + 2.5rem))
+    clamp(1.25rem, 5vw, 5rem) 4rem;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -1899,7 +1926,8 @@ html.lenis body {
 /* ===================== CART / CHECKOUT ===================== */
 .cartpage,
 .checkout {
-  padding: clamp(7rem, 12vw, 9rem) clamp(1.25rem, 5vw, 5rem) 5rem;
+  padding: max(clamp(7rem, 12vw, 9rem), calc(var(--ab-header-max, 0px) + 2.5rem))
+    clamp(1.25rem, 5vw, 5rem) 5rem;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -2075,7 +2103,7 @@ html.lenis body {
   align-items: center;
   text-align: center;
   gap: 1rem;
-  padding: clamp(8rem, 14vw, 11rem) 1.5rem 5rem;
+  padding: max(clamp(8rem, 14vw, 11rem), calc(var(--ab-header-max, 0px) + 3rem)) 1.5rem 5rem;
   max-width: 640px;
   margin: 0 auto;
 }
@@ -2835,7 +2863,7 @@ html.lenis body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: clamp(4rem, 12vh, 8rem) 1.2rem 2rem;
+  padding: calc(var(--ab-header-h, 5rem) + 1rem) 1.2rem 2rem;
 }
 .srch-scrim {
   position: absolute;
@@ -2946,7 +2974,8 @@ html.lenis body {
 .srch-all:hover { background: rgba(201, 168, 76, 0.07); }
 
 .srchpage {
-  padding: clamp(7rem, 14vh, 10rem) clamp(1rem, 5vw, 3rem) 5rem;
+  padding: max(clamp(7rem, 14vh, 10rem), calc(var(--ab-header-max, 0px) + 2.5rem))
+    clamp(1rem, 5vw, 3rem) 5rem;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -3005,7 +3034,20 @@ html.lenis body {
   cursor: pointer;
 }
 .cosum-coupon-on button:hover { color: #d18a76; }
-.cosum-coupon-err { color: #d18a76; font-size: 0.74rem; margin-top: 0.5rem; }
+/* A refused code has to read as a refusal — a clear red, not the muted rose
+   used for softer messages. */
+.cosum-coupon-err {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(220, 76, 62, 0.5);
+  background: rgba(220, 76, 62, 0.12);
+  color: #ff6b5a;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
 .cosum-off { color: var(--gold); }
 
 @media (max-width: 640px) {
@@ -3013,3 +3055,38 @@ html.lenis body {
   .srch { padding-top: 5rem; }
   .srch-price s { display: none; }
 }
+
+/* Delivery charge, shown as a consequence of the chosen city rather than a
+   separate choice the customer could get wrong. */
+.zone-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  background: #0d0d0d;
+  color: var(--cream);
+  font-size: 0.82rem;
+}
+.zone-note em { font-style: normal; color: var(--gold); }
+.zone-note.muted { color: var(--text-muted); }
+.zone-note.muted em { color: var(--text-muted); }
+
+/* The campaign saving, shown in the bag so the reduction isn't invisible. */
+.cart-was {
+  margin-left: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.82em;
+}
+.cart-off {
+  align-self: center;
+  padding: 0.22rem 0.5rem;
+  background: var(--gold);
+  color: var(--black);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cart-saving { color: var(--gold); }
